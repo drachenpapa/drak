@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="docs/assets/banner.png" alt="Zatacka" height="100px" align="center">
+  <img src="docs/assets/logo.png" alt="Drak" height="100px" align="center">
+Drak
 </p>
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow?style=flat-square" alt="License"></a>
@@ -7,9 +8,9 @@
   <img src="https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovate&style=flat-square" alt="Renovate">
 </p>
 
-_Zatacka_ (also known as _Achtung, die Kurve!_, _Achtung_ or _Curve Fever_) is a multiplayer snake game where players
-leave a trail (curve) and try to outlast their opponents by avoiding collisions with their own and other players'
-curves.
+_Drak_ is a multiplayer snake game inspired by the classic _Zatacka_ (also known as _Achtung, die Kurve!_,
+_Achtung_ or _Curve Fever_) where players leave a trail (curve) and try to outlast their opponents by avoiding
+collisions with their own and other players' curves.
 This repository is a Java remake of the game, originally created during a school internship in 2007. The original source
 code can be found in the [original-src](original-src) directory.
 

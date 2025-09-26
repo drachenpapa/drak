@@ -5,11 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>de.drachenpapa</groupId>
-  <artifactId>zatacka</artifactId>
+  <artifactId>drak</artifactId>
   <version>1.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>Zatacka</name>
+  <name>Drak</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -88,7 +88,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>de.drachenpapa.zatacka.ZatackaApplication</mainClass>
+              <mainClass>de.drachenpapa.drak.Drak</mainClass>
             </manifest>
           </archive>
         </configuration>

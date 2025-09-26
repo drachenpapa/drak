@@ -1,8 +1,8 @@
 #!/bin/bash
 
-APP_NAME="Zatacka"
-MAIN_CLASS="de.drachenpapa.zatacka.ZatackaApplication"
-JAR_PATH="./target/zatacka-1.1-SNAPSHOT.jar"
+APP_NAME="Drak"
+MAIN_CLASS="de.drachenpapa.drak.Drak"
+JAR_PATH="./target/drak-1.1-SNAPSHOT.jar"
 ICON_PATH="./icon/icon.png"
 DIST_DIR="./dist"
 

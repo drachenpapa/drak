@@ -1,13 +1,13 @@
 cff-version: 1.2.0
-message: If you use Zatacka in your research, please cite it using the following metadata.
+message: If you use Drak in your research, please cite it using the following metadata.
 authors:
   - family-names: Steinberg
     given-names: Henning
-title: "Zatacka"
+title: "Drak"
 version: 1.0.0
 date-released: 2025-06-01
-url: https://github.com/drachenpapa/zatacka
-repository-code: https://github.com/drachenpapa/zatacka
+url: https://github.com/drachenpapa/drak
+repository-code: https://github.com/drachenpapa/drak
 license: MIT
 keywords:
   - multiplayer
@@ -18,4 +18,4 @@ keywords:
   - Achtung, die Kurve
   - Curve Fever
 abstract: >
-  Zatacka is a remake of the classic multiplayer game (also known as Achtung, die Kurve! or Curve Fever), built in Java. Originally created during a school internship, the game has now been modernized with a focus on code quality and modern principles. Players control growing curves and try to outlast their opponents by avoiding collisions with all curves.
+  Drk is a remake of the classic multiplayer game Zatacka (also known as Achtung, die Kurve! or Curve Fever), built in Java. Originally created during a school internship, the game has now been modernized with a focus on code quality and modern principles. Players control growing curves and try to outlast their opponents by avoiding collisions with all curves.

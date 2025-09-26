@@ -4,7 +4,7 @@ layout: default
 
 ## Gameplay
 
-_Zatacka_ is a fast-paced multiplayer action game inspired by the classic _Achtung, die Kurve!_.
+_Drak_ is a fast-paced multiplayer action game inspired by the classic _Zatacka_, also known as _Achtung, die Kurve!_.
 This Java adaptation lets up to six players compete by steering their colored curves across the playfield.
 The objective is to survive as long as possible without crashing into the curves of other players or their own.
 

@@ -1,7 +1,7 @@
-<p align="center">
+<h1 align="center">
   <img src="docs/assets/logo.png" alt="Drak" height="100px" align="center">
-Drak
-</p>
+  Drak
+</h1>
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/snyk-monitored-4C4A73?logo=snyk&style=flat-square" alt="Snyk">

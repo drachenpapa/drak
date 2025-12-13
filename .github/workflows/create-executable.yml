@@ -27,7 +27,7 @@ jobs:
           chmod +x ./scripts/build.sh
           ./scripts/build.sh
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: drak-${{ matrix.os == 'ubuntu-latest' && 'linux' || matrix.os == 'macos-latest' && 'mac' || 'win' }}
           path: dist/*

@@ -41,7 +41,7 @@ jobs:
       - name: Run unit tests
         run: mvn -B test -U
       - name: Gather test results
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         if: always()
         with:
           name: Test Report

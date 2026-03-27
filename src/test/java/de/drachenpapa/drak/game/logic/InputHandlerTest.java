@@ -1,75 +1,95 @@
 package de.drachenpapa.drak.game.logic;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.awt.*;
+import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class InputHandlerTest {
+@DisplayName("InputHandler")
+@ExtendWith(MockitoExtension.class)
+class InputHandlerTest {
 
-    private final GameEngine gameEngine = mock(GameEngine.class);
+    @Mock
+    private GameEngine gameEngine;
 
     private InputHandler inputHandler;
     private Player player;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         player = new Player("Player 1", Color.RED, '1', 'q');
-
         inputHandler = new InputHandler(gameEngine);
-
         when(gameEngine.getPlayers()).thenReturn(List.of(player));
     }
 
-    @Test
-    public void testKeyPressedLeftKey() {
-        KeyEvent leftKeyEvent = new KeyEvent(new java.awt.Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_A, '1');
-        inputHandler.keyPressed(leftKeyEvent);
+    @Nested
+    @DisplayName("keyPressed()")
+    class KeyPressed {
 
-        assertThat("The left key should be pressed", player.isLeftKeyPressed(), is(true));
-        assertThat("The right key should not be pressed", player.isRightKeyPressed(), is(false));
+        @Test
+        @DisplayName("registers left key for matching player")
+        void registersLeftKey() {
+            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_A, '1');
+            inputHandler.keyPressed(event);
+
+            assertThat(player.isLeftKeyPressed()).isTrue();
+            assertThat(player.isRightKeyPressed()).isFalse();
+        }
+
+        @Test
+        @DisplayName("registers right key for matching player")
+        void registersRightKey() {
+            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_D, 'q');
+            inputHandler.keyPressed(event);
+
+            assertThat(player.isRightKeyPressed()).isTrue();
+            assertThat(player.isLeftKeyPressed()).isFalse();
+        }
+
+        @Test
+        @DisplayName("quits game on Escape")
+        void quitsGameOnEscape() {
+            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED);
+            inputHandler.keyPressed(event);
+
+            verify(gameEngine).quitGame();
+        }
     }
 
-    @Test
-    public void testKeyPressedRightKey() {
-        KeyEvent rightKeyEvent = new KeyEvent(new java.awt.Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_D, 'q');
-        inputHandler.keyPressed(rightKeyEvent);
+    @Nested
+    @DisplayName("keyReleased()")
+    class KeyReleased {
 
-        assertThat("The right key should be pressed", player.isRightKeyPressed(), is(true));
-        assertThat("The left key should not be pressed", player.isLeftKeyPressed(), is(false));
-    }
+        @Test
+        @DisplayName("clears left key for matching player")
+        void clearsLeftKey() {
+            player.setLeftKeyPressed(true);
+            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_A, '1');
+            inputHandler.keyReleased(event);
 
-    @Test
-    public void testKeyPressedEscapeKey() {
-        KeyEvent escapeKeyEvent = new KeyEvent(new java.awt.Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED);
-        inputHandler.keyPressed(escapeKeyEvent);
+            assertThat(player.isLeftKeyPressed()).isFalse();
+        }
 
-        verify(gameEngine).quitGame();
-    }
+        @Test
+        @DisplayName("clears right key for matching player")
+        void clearsRightKey() {
+            player.setRightKeyPressed(true);
+            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_D, 'q');
+            inputHandler.keyReleased(event);
 
-    @Test
-    public void testKeyReleasedLeftKey() {
-        player.setLeftKeyPressed(true);
-        KeyEvent leftKeyReleaseEvent = new KeyEvent(new java.awt.Canvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_A, '1');
-        inputHandler.keyReleased(leftKeyReleaseEvent);
-
-        assertThat("The left key should not be pressed after release", player.isLeftKeyPressed(), is(false));
-    }
-
-    @Test
-    public void testKeyReleasedRightKey() {
-        player.setRightKeyPressed(true);
-        KeyEvent rightKeyReleaseEvent = new KeyEvent(new java.awt.Canvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_D, 'q');
-        inputHandler.keyReleased(rightKeyReleaseEvent);
-
-        assertThat("The right key should not be pressed after release", player.isRightKeyPressed(), is(false));
+            assertThat(player.isRightKeyPressed()).isFalse();
+        }
     }
 }

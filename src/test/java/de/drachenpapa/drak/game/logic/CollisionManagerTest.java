@@ -1,27 +1,34 @@
 package de.drachenpapa.drak.game.logic;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-public class CollisionManagerTest {
+@DisplayName("CollisionManager")
+@ExtendWith(MockitoExtension.class)
+class CollisionManagerTest {
 
-    private final PlayerManager playerManager = mock(PlayerManager.class);
+    @Mock
+    private PlayerManager playerManager;
 
     private List<Player> players;
     private List<Point[]> curvePoints;
     private CollisionManager collisionManager;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         players = List.of(
                 new Player("Player 1", Color.RED, '1', 'q'),
                 new Player("Player 2", Color.GREEN, 'y', 'x'));
@@ -31,45 +38,58 @@ public class CollisionManagerTest {
         collisionManager = new CollisionManager(players, curvePoints, playerManager);
     }
 
-    @Test
-    public void testHandleCollisionSetsPlayerDeadAndIncreasesPoints() {
-        collisionManager.handleCollision(0);
+    @Nested
+    @DisplayName("handleCollision()")
+    class HandleCollision {
 
-        assertThat("Player should be set to dead after collision", players.getFirst().isAlive(), is(false));
-        verify(playerManager).increasePointsForAlivePlayers();
+        @Test
+        @DisplayName("marks player as dead and increases points for alive players")
+        void marksPlayerDeadAndIncreasesPoints() {
+            collisionManager.handleCollision(0);
+
+            assertThat(players.getFirst().isAlive()).isFalse();
+            verify(playerManager).increasePointsForAlivePlayers();
+        }
     }
 
-    @Test
-    public void testIsCollisionDetectedWrapsAroundAndDetectsNoCollision() {
-        Curve curve = new Curve(700, 10, 0, 1000);
+    @Nested
+    @DisplayName("isCollisionDetected()")
+    class IsCollisionDetected {
 
-        boolean collision = collisionManager.isCollisionDetected(curve);
+        @Test
+        @DisplayName("wraps x-position and returns false when curve exits play area")
+        void wrapsPositionAndReturnsFalseOnBoundaryExit() {
+            Curve curve = new Curve(700, 10, 0, 1000);
 
-        assertThat("No collision should be detected after wrapping around", collision, is(false));
-        assertThat("Curve x position should be wrapped to PLAY_AREA_WIDTH - 1", curve.getXPosition(), is(0));
-    }
+            boolean collision = collisionManager.isCollisionDetected(curve);
 
-    @Test
-    public void testIsCollisionDetectedDetectsSelfCollision() {
-        Curve curve = new Curve(10, 10, 0, 1000);
-        curve.addPoint(10, 10);
-        for (int i = 0; i < 11; i++) {
-            curve.addPoint(10, 10);
+            assertThat(collision).isFalse();
+            assertThat(curve.getXPosition()).isEqualTo(0);
         }
 
-        boolean collision = collisionManager.isCollisionDetected(curve);
+        @Test
+        @DisplayName("returns true on self-collision")
+        void returnsTrueOnSelfCollision() {
+            Curve curve = new Curve(10, 10, 0, 1000);
+            curve.addPoint(10, 10);
+            for (int i = 0; i < 11; i++) {
+                curve.addPoint(10, 10);
+            }
 
-        assertThat("Self-collision should be detected when curve overlaps itself", collision, is(true));
-    }
+            boolean collision = collisionManager.isCollisionDetected(curve);
 
-    @Test
-    public void testIsCollisionDetectedDetectsOtherCurveCollision() {
-        Curve curve = new Curve(20, 20, 0, 1000);
-        Point[] otherCurve = new Point[]{new Point(20, 20)};
-        curvePoints.add(otherCurve);
+            assertThat(collision).isTrue();
+        }
 
-        boolean collision = collisionManager.isCollisionDetected(curve);
+        @Test
+        @DisplayName("returns true when hitting another curve")
+        void returnsTrueOnOtherCurveCollision() {
+            Curve curve = new Curve(20, 20, 0, 1000);
+            curvePoints.add(new Point[]{new Point(20, 20)});
 
-        assertThat("Collision with another curve should be detected", collision, is(true));
+            boolean collision = collisionManager.isCollisionDetected(curve);
+
+            assertThat(collision).isTrue();
+        }
     }
 }

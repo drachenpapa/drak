@@ -1,64 +1,91 @@
 package de.drachenpapa.drak.game.logic;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class PlayerTest {
+@DisplayName("Player")
+class PlayerTest {
 
     private Player player;
-    private Curve newCurve;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         player = new Player("Player 1", Color.RED, '1', 'q');
-        newCurve = new Curve(200, 300, 90, 5);
     }
 
-    @Test
-    public void testInitialPlayerName() {
-        assertThat("Player name should match the expected value", player.getPlayerName(), is("Player 1"));
+    @Nested
+    @DisplayName("initial state")
+    class InitialState {
+
+        @Test
+        @DisplayName("has correct name")
+        void hasCorrectName() {
+            assertThat(player.getPlayerName()).isEqualTo("Player 1");
+        }
+
+        @Test
+        @DisplayName("has correct color")
+        void hasCorrectColor() {
+            assertThat(player.getColor()).isEqualTo(Color.RED);
+        }
+
+        @Test
+        @DisplayName("has a non-null curve")
+        void hasNonNullCurve() {
+            assertThat(player.getCurve()).isNotNull();
+        }
     }
 
-    @Test
-    public void testInitialColor() {
-        assertThat("Player color should match the expected value", player.getColor(), is(Color.RED));
+    @Nested
+    @DisplayName("setCurve()")
+    class SetCurve {
+
+        @Test
+        @DisplayName("updates the active curve")
+        void updatesActiveCurve() {
+            Curve newCurve = new Curve(200, 300, 90, 5);
+            player.setCurve(newCurve);
+            assertThat(player.getCurve()).isEqualTo(newCurve);
+        }
     }
 
-    @Test
-    public void testInitialCurve() {
-        assertThat("Player's curve should not be null upon initialization", player.getCurve(), is(notNullValue()));
+    @Nested
+    @DisplayName("key state")
+    class KeyState {
+
+        @Test
+        @DisplayName("left key starts unpressed and can be set")
+        void leftKeyStartsUnpressedAndCanBeSet() {
+            assertThat(player.isLeftKeyPressed()).isFalse();
+            player.setLeftKeyPressed(true);
+            assertThat(player.isLeftKeyPressed()).isTrue();
+        }
+
+        @Test
+        @DisplayName("right key starts unpressed and can be set")
+        void rightKeyStartsUnpressedAndCanBeSet() {
+            assertThat(player.isRightKeyPressed()).isFalse();
+            player.setRightKeyPressed(true);
+            assertThat(player.isRightKeyPressed()).isTrue();
+        }
     }
 
-    @Test
-    public void testSetCurve() {
-        player.setCurve(newCurve);
-        assertThat("Player's curve should match the newly set curve", player.getCurve(), is(newCurve));
-    }
+    @Nested
+    @DisplayName("increaseScore()")
+    class IncreaseScore {
 
-    @Test
-    public void testLeftKeyPressed() {
-        assertThat("Left key should not be pressed initially", player.isLeftKeyPressed(), is(false));
-        player.setLeftKeyPressed(true);
-        assertThat("Left key should be pressed after being set", player.isLeftKeyPressed(), is(true));
-    }
-
-    @Test
-    public void testRightKeyPressed() {
-        assertThat("Right key should not be pressed initially", player.isRightKeyPressed(), is(false));
-        player.setRightKeyPressed(true);
-        assertThat("Right key should be pressed after being set", player.isRightKeyPressed(), is(true));
-    }
-
-    @Test
-    public void testIncreaseScore() {
-        int initialScore = player.getScore();
-        player.increaseScore();
-        assertThat("Player's score should increase by 1 after calling increaseScore", player.getScore(), is(initialScore + 1));
+        @Test
+        @DisplayName("increments score by one")
+        void incrementsScoreByOne() {
+            int initialScore = player.getScore();
+            player.increaseScore();
+            assertThat(player.getScore()).isEqualTo(initialScore + 1);
+        }
     }
 }

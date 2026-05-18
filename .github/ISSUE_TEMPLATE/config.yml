@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Project Documentation
+    url: https://drachenpapa.github.io/drak
+    about: Read the project docs and gameplay information.
+  - name: Support & Help
+    url: https://github.com/drachenpapa/drak/blob/main/SUPPORT.md
+    about: Read support, bug reporting, and contribution information.
+  - name: Security Policy
+    url: https://github.com/drachenpapa/drak/blob/main/SECURITY.md
+    about: Report potential security issues privately.

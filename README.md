@@ -4,7 +4,6 @@
 </h1>
 <p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow?style=flat-square" alt="License"></a>
-  <img src="https://img.shields.io/badge/snyk-monitored-4C4A73?logo=snyk&style=flat-square" alt="Snyk">
   <img src="https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovate&style=flat-square" alt="Renovate">
 </p>
 
@@ -31,6 +30,17 @@ release page or build it yourself.
 - Each player uses two keys to turn left or right.
 - The goal is to avoid crashing into your own curve or other players' curves.
 - The last surviving player wins the round and earns points.
+
+## Contributing & Support
+
+This project is feature-complete regarding core gameplay.
+Bug fixes, documentation improvements, and maintenance updates are welcome.
+Gameplay feature additions or core mechanic changes are usually out of scope.
+
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Support & Help](SUPPORT.md)
+- [Security Policy](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## License
 

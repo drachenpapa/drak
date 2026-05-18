@@ -1,5 +1,6 @@
 cff-version: 1.2.0
 message: If you use Drak in your research, please cite it using the following metadata.
+type: software
 authors:
   - family-names: Steinberg
     given-names: Henning
@@ -18,4 +19,4 @@ keywords:
   - Achtung, die Kurve
   - Curve Fever
 abstract: >
-  Drk is a remake of the classic multiplayer game Zatacka (also known as Achtung, die Kurve! or Curve Fever), built in Java. Originally created during a school internship, the game has now been modernized with a focus on code quality and modern principles. Players control growing curves and try to outlast their opponents by avoiding collisions with all curves.
+  Drak is a remake of the classic multiplayer game Zatacka (also known as Achtung, die Kurve! or Curve Fever), built in Java. Originally created during a school internship, the game has now been modernized with a focus on code quality and modern principles. Players control growing curves and try to outlast their opponents by avoiding collisions with all curves.

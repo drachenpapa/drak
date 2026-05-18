@@ -73,7 +73,7 @@ class PlayerManagerTest {
             playerManager.increasePointsForAlivePlayers();
 
             assertThat(players.get(0).getScore()).isEqualTo(initialScore + 1);
-            assertThat(players.get(1).getScore()).isEqualTo(0);
+            assertThat(players.get(1).getScore()).isZero();
         }
     }
 }

@@ -13,11 +13,11 @@ import java.awt.*;
  */
 public class GamePanel extends JPanel {
 
-    private final GameRenderer gameRenderer;
-    private final PlayerManager playerManager;
-    private final GameStateManager gameStateManager;
-    private final GameEngine gameEngine;
-    private final Image gameFieldImage;
+    private final transient GameRenderer gameRenderer;
+    private final transient PlayerManager playerManager;
+    private final transient GameStateManager gameStateManager;
+    private final transient GameEngine gameEngine;
+    private final transient Image gameFieldImage;
 
     public GamePanel(GameRenderer gameRenderer, PlayerManager playerManager, GameStateManager gameStateManager, GameEngine gameEngine, Image gameFieldImage) {
         this.gameRenderer = gameRenderer;

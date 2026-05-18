@@ -14,15 +14,15 @@ import java.util.List;
  */
 public class GameRenderer {
 
+    private static final String SCORE_FONT_FAMILY = "SANS_SERIF";
+
     public void drawGame(Graphics g, Image gameFieldImage, List<Player> players, GameState state, Runnable handleRoundTransition) {
         g.drawImage(gameFieldImage, 0, 0, null);
         handleRoundTransition.run();
-        if (state == GameState.GAME_OVER) {
-            drawFinalStatistics(g, players);
-        } else if (state == GameState.STARTED) {
-            drawStartScreen(g, players);
-        } else if (state == GameState.RUNNING || state == GameState.PAUSED) {
-            drawScores(g, players);
+        switch (state) {
+            case GAME_OVER -> drawFinalStatistics(g, players);
+            case STARTED -> drawStartScreen(g, players);
+            case RUNNING, PAUSED, READY_FOR_NEXT_ROUND -> drawScores(g, players);
         }
     }
 
@@ -48,9 +48,15 @@ public class GameRenderer {
 
     public void clearGameField(Image gameFieldImage) {
         Graphics2D g2 = (Graphics2D) gameFieldImage.getGraphics();
-        g2.setColor(Color.BLACK);
-        g2.fillRect(0, 0, GameEngine.PLAY_AREA_WIDTH, GameEngine.PLAY_AREA_HEIGHT);
-        g2.dispose();
+        if (g2 == null) {
+            return;
+        }
+        try {
+            g2.setColor(Color.BLACK);
+            g2.fillRect(0, 0, GameEngine.PLAY_AREA_WIDTH, GameEngine.PLAY_AREA_HEIGHT);
+        } finally {
+            g2.dispose();
+        }
     }
 
     void drawStartScreen(Graphics g, List<Player> players) {
@@ -65,7 +71,7 @@ public class GameRenderer {
         for (int i = 0; i < players.size(); i++) {
             Player player = players.get(i);
             g.setColor(player.getColor());
-            g.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
+            g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, 16));
             g.drawString(player.getPlayerName(), 690, 30 + (i * 50));
             g.drawString(player.getScore() + " pts", 690, 50 + (i * 50));
         }
@@ -75,13 +81,13 @@ public class GameRenderer {
         g.setColor(Color.black);
         g.fillRect(0, 0, GameEngine.WINDOW_WIDTH, GameEngine.WINDOW_HEIGHT);
         g.setColor(Color.white);
-        g.setFont(new Font("SANS_SERIF", Font.BOLD, 72));
+        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, 72));
         g.drawString("Final Scores", 200, 100);
 
         for (int i = 0; i < players.size(); i++) {
             Player player = players.get(i);
             g.setColor(player.getColor());
-            g.setFont(new Font("SANS_SERIF", Font.BOLD, 36));
+            g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, 36));
             g.drawString(player.getPlayerName(), 200, 175 + (i * 75));
             g.drawString(player.getScore() + " pts", 500, 175 + (i * 75));
         }

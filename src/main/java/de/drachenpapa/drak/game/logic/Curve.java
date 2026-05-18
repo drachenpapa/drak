@@ -6,6 +6,7 @@ import lombok.Setter;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.random.RandomGenerator;
 
 /**
  * Represents a player's curve on the game field.
@@ -21,6 +22,9 @@ public class Curve {
     private static final int MAX_GAP_LENGTH = 4;
     private static final double STEP_SIZE = 6.0;
     private static final double TURN_ANGLE = 10.0;
+    private static final RandomGenerator RNG = RandomGenerator.getDefault();
+    private static final int MAX_STORED_POINTS = 50_000;
+    private static final int POINT_TRIM_CHUNK_SIZE = 1_000;
 
     private double directionAngle;
     private int xPosition;
@@ -57,6 +61,15 @@ public class Curve {
 
     void addPoint(int x, int y) {
         points.add(new Point(x, y));
+        trimOldPointsIfNeeded();
+    }
+
+    private void trimOldPointsIfNeeded() {
+        if (points.size() <= MAX_STORED_POINTS) {
+            return;
+        }
+        int trimCount = Math.min(POINT_TRIM_CHUNK_SIZE, points.size() - MAX_STORED_POINTS);
+        points.subList(0, trimCount).clear();
     }
 
     void turnLeft() {
@@ -78,8 +91,8 @@ public class Curve {
     private void startNewGap(long currentTime) {
         isGapActive = true;
         lastGapTimestamp = currentTime;
-        gapInterval = MIN_GAP_INTERVAL + (long) (Math.random() * (MAX_GAP_INTERVAL - MIN_GAP_INTERVAL));
-        gapLengthCounter = MIN_GAP_LENGTH + (int) (Math.random() * (MAX_GAP_LENGTH - MIN_GAP_LENGTH + 1));
+        gapInterval = RNG.nextLong(MIN_GAP_INTERVAL, MAX_GAP_INTERVAL);
+        gapLengthCounter = RNG.nextInt(MIN_GAP_LENGTH, MAX_GAP_LENGTH + 1);
     }
 
     private boolean continueGap() {

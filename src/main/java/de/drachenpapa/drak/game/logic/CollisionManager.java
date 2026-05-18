@@ -90,7 +90,9 @@ class CollisionManager {
 
     private boolean isPointCollision(Point p, int x, int y) {
         if (Math.abs(p.x - x) <= CURVE_WIDTH && Math.abs(p.y - y) <= CURVE_WIDTH) {
-            double dist = Math.hypot(p.x - x, p.y - y);
+            double deltaX = (double) p.x - x;
+            double deltaY = (double) p.y - y;
+            double dist = Math.hypot(deltaX, deltaY);
             return dist < CURVE_WIDTH;
         }
 

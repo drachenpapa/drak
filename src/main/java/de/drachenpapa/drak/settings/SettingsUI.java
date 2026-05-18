@@ -1,15 +1,18 @@
 package de.drachenpapa.drak.settings;
 
 import com.formdev.flatlaf.FlatLightLaf;
+import de.drachenpapa.drak.game.logic.GameConfig;
 import de.drachenpapa.drak.game.logic.GameEngine;
-import de.drachenpapa.drak.game.logic.Player;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serial;
+import java.net.URL;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static de.drachenpapa.drak.Drak.GAME_TITLE;
 
@@ -19,28 +22,45 @@ import static de.drachenpapa.drak.Drak.GAME_TITLE;
  */
 public class SettingsUI extends JFrame implements ActionListener {
 
+    @Serial
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(SettingsUI.class.getName());
+
+    private static final int MAX_PLAYERS = 6;
+    private static final int DEFAULT_SPEED = 3;
+    private static final String START_GAME_COMMAND = "Start Game";
+    private static final String LOAD_DEFAULTS_COMMAND = "Load Defaults";
+
     private final char[] defaultLeftControlKeys;
     private final char[] defaultRightControlKeys;
-    private final int maxPlayers = 6;
     private final Color[] defaultColors;
     private final OptionsControlPanel optionsControlPanel;
     private final PlayerSettingsPanel[] playerPanels;
-    private final List<Player> players = new ArrayList<>(maxPlayers);
+    private final transient SettingsPlayerAssembler playerAssembler;
+    private final transient ControlKeyInputValidator keyInputValidator;
 
     public SettingsUI() {
+        this(new SettingsPlayerAssembler(), new ControlKeyInputValidator());
+    }
+
+    SettingsUI(SettingsPlayerAssembler playerAssembler, ControlKeyInputValidator keyInputValidator) {
+        this.playerAssembler = Objects.requireNonNull(playerAssembler);
+        this.keyInputValidator = Objects.requireNonNull(keyInputValidator);
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
         } catch (Exception ex) {
-            System.err.println("Failed to initialize LaF");
+            logger.log(Level.WARNING, "Failed to initialize custom look and feel; falling back to default.", ex);
         }
         UIManager.put("Button.focus", new Color(0, 0, 0, 0));
         UIManager.put("Button.border", BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         setTitle(GAME_TITLE);
-        try {
-            Image logo = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/logo.png"));
-            setIconImage(logo);
-        } catch (Exception ignored) { }
+        URL logoUrl = getClass().getResource("/logo.png");
+        if (logoUrl != null) {
+            setIconImage(Toolkit.getDefaultToolkit().getImage(logoUrl));
+        } else {
+            logger.log(Level.WARNING, "Logo resource /logo.png not found – window icon will not be set");
+        }
         JPanel mainPanel = new JPanel();
 
         defaultColors = new Color[]{
@@ -56,24 +76,24 @@ public class SettingsUI extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBackground(new Color(205, 205, 205));
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-        playerPanels = new PlayerSettingsPanel[maxPlayers];
-        for (int i = 0; i < maxPlayers; i++) {
+        playerPanels = new PlayerSettingsPanel[MAX_PLAYERS];
+        for (int i = 0; i < MAX_PLAYERS; i++) {
             playerPanels[i] = new PlayerSettingsPanel(i, defaultColors[i], defaultLeftControlKeys[i], defaultRightControlKeys[i]);
             mainPanel.add(playerPanels[i]);
         }
 
         PlayerSettingsPanel.addAllSelector(mainPanel, playerPanels);
 
-        optionsControlPanel = new OptionsControlPanel(3, 1, 5, this);
+        optionsControlPanel = new OptionsControlPanel(DEFAULT_SPEED, 1, 5, this);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 6)));
         mainPanel.add(optionsControlPanel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         loadDefaultPlayerSettings();
 
-        for (int i = 0; i < maxPlayers; i++) {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
             playerPanels[i].checkBox.addActionListener(this);
             playerPanels[i].colorButton.addActionListener(this);
             playerPanels[i].leftKeyButton.addActionListener(this);
@@ -86,12 +106,12 @@ public class SettingsUI extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand().equals("Start Game")) {
-            generatePlayers();
+        if (START_GAME_COMMAND.equals(e.getActionCommand())) {
             int speedLevel = optionsControlPanel.getSpeed();
-            GameEngine gameEngine = new GameEngine(players, speedLevel);
+            GameConfig gameConfig = new GameConfig(speedLevel, playerAssembler.createSelectedPlayerConfigs(playerPanels));
+            GameEngine gameEngine = new GameEngine(gameConfig);
             gameEngine.startGame();
-        } else if (e.getActionCommand().equals("Load Defaults")) {
+        } else if (LOAD_DEFAULTS_COMMAND.equals(e.getActionCommand())) {
             loadDefaultPlayerSettings();
         } else {
             handlePlayerActions(e);
@@ -99,7 +119,7 @@ public class SettingsUI extends JFrame implements ActionListener {
     }
 
     private void loadDefaultPlayerSettings() {
-        for (int i = 0; i < maxPlayers; i++) {
+        for (int i = 0; i < MAX_PLAYERS; i++) {
             playerPanels[i].checkBox.setSelected(false);
             playerPanels[i].nameField.setText("Player " + (i + 1));
             playerPanels[i].colorButton.setBackground(defaultColors[i]);
@@ -122,18 +142,6 @@ public class SettingsUI extends JFrame implements ActionListener {
         optionsControlPanel.setSpeedToDefault();
     }
 
-    private void generatePlayers() {
-        for (PlayerSettingsPanel panel : playerPanels) {
-            if (panel.checkBox.isSelected()) {
-                String name = panel.nameField.getText();
-                Color color = panel.colorButton.getBackground();
-                char leftKey = panel.leftKeyButton.getText().charAt(0);
-                char rightKey = panel.rightKeyButton.getText().charAt(0);
-                players.add(new Player(name, color, leftKey, rightKey));
-            }
-        }
-    }
-
     private void handlePlayerActions(ActionEvent e) {
         for (PlayerSettingsPanel panel : playerPanels) {
             if (e.getSource() == panel.colorButton) {
@@ -143,14 +151,10 @@ public class SettingsUI extends JFrame implements ActionListener {
                 }
             } else if (e.getSource() == panel.leftKeyButton) {
                 String newKey = JOptionPane.showInputDialog(this, "Enter new left control key for " + panel.nameField.getText(), panel.leftKeyButton.getText());
-                if (newKey != null && !newKey.isEmpty()) {
-                    panel.leftKeyButton.setText(newKey);
-                }
+                updateControlKeyFromInput(newKey, panel.leftKeyButton);
             } else if (e.getSource() == panel.rightKeyButton) {
                 String newKey = JOptionPane.showInputDialog(this, "Enter new right control key for " + panel.nameField.getText(), panel.rightKeyButton.getText());
-                if (newKey != null && !newKey.isEmpty()) {
-                    panel.rightKeyButton.setText(newKey);
-                }
+                updateControlKeyFromInput(newKey, panel.rightKeyButton);
             } else if (e.getSource() == panel.checkBox) {
                 if (panel.checkBox.isSelected()) {
                     panel.enableRow();
@@ -159,5 +163,21 @@ public class SettingsUI extends JFrame implements ActionListener {
                 }
             }
         }
+    }
+
+    private void updateControlKeyFromInput(String newKey, JButton keyButton) {
+        if (newKey == null) {
+            return;
+        }
+        if (keyInputValidator.isInvalidKeyInput(newKey)) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please enter exactly one non-whitespace character.",
+                    "Invalid Control Key",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        keyButton.setText(String.valueOf(keyInputValidator.toControlKey(newKey)));
     }
 }

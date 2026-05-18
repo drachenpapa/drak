@@ -11,6 +11,7 @@ public class GameStateManager {
 
     private final int winningScore;
     private final PlayerManager playerManager;
+    private javax.swing.Timer roundTransitionTimer;
 
     @Setter
     @Getter
@@ -36,11 +37,20 @@ public class GameStateManager {
     void handleRoundTransition(Runnable resetRound) {
         if (gameState == GameState.READY_FOR_NEXT_ROUND) {
             gameState = GameState.PAUSED;
-            new javax.swing.Timer(1000, e -> {
+            stopTimers();
+            roundTransitionTimer = new javax.swing.Timer(1000, e -> {
                 resetRound.run();
                 gameState = GameState.RUNNING;
-                ((javax.swing.Timer) e.getSource()).stop();
-            }).start();
+                stopTimers();
+            });
+            roundTransitionTimer.start();
+        }
+    }
+
+    void stopTimers() {
+        if (roundTransitionTimer != null) {
+            roundTransitionTimer.stop();
+            roundTransitionTimer = null;
         }
     }
 }

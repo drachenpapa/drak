@@ -3,7 +3,7 @@ package de.drachenpapa.drak;
 import de.drachenpapa.drak.settings.SettingsUI;
 
 /**
- * Main entry point for the Drak game application.
+ * Main entry point for the game application.
  * Initializes and starts the game UI.
  */
 public class Drak {

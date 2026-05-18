@@ -6,6 +6,7 @@ import de.drachenpapa.drak.game.view.GameWindow;
 import de.drachenpapa.drak.game.view.GameWindowFactory;
 import de.drachenpapa.drak.game.view.DefaultGameWindowFactory;
 
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -21,6 +22,8 @@ public class GameEngine {
     public static final int WINDOW_HEIGHT = 600;
     public static final int PLAY_AREA_WIDTH = 680;
     public static final int PLAY_AREA_HEIGHT = WINDOW_HEIGHT;
+    private static final int SPEED_DELAY_MULTIPLIER = 10;
+    private static final int SPEED_LEVEL_INVERSION_OFFSET = 6;
 
     private final BufferedImage gameFieldImage;
     private final CollisionManager collisionManager;
@@ -30,32 +33,45 @@ public class GameEngine {
     private final GameWindow gameWindow;
     private final PlayerManager playerManager;
     private final int gameSpeed;
+    private Timer gameTimer;
+
+    public GameEngine(GameConfig config) {
+        this(config, new DefaultGameWindowFactory());
+    }
+
+    GameEngine(GameConfig config, GameWindowFactory windowFactory) {
+        List<Player> players = config.createPlayers();
+        this.playerManager = new PlayerManager(players);
+        this.collisionManager = new CollisionManager(playerManager.getPlayers(), playerManager.getCurvePoints(), playerManager);
+        this.gameStateManager = new GameStateManager(playerManager, (players.size() - 1) * 10);
+        this.gameRenderer = new GameRenderer();
+        this.gameSpeed = SPEED_DELAY_MULTIPLIER * (SPEED_LEVEL_INVERSION_OFFSET - config.speed());
+        this.gameFieldImage = new BufferedImage(PLAY_AREA_WIDTH, PLAY_AREA_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        this.gamePanel = new GamePanel(gameRenderer, playerManager, gameStateManager, this, gameFieldImage);
+        this.gameWindow = windowFactory.create(gamePanel, this);
+    }
 
     public GameEngine(List<Player> players, int speed) {
         this(players, speed, new DefaultGameWindowFactory());
     }
 
     GameEngine(List<Player> players, int speed, GameWindowFactory windowFactory) {
-        this.playerManager = new PlayerManager(players);
-        this.collisionManager = new CollisionManager(playerManager.getPlayers(), playerManager.getCurvePoints(), playerManager);
-        this.gameStateManager = new GameStateManager(playerManager, (players.size() - 1) * 10);
-        this.gameRenderer = new GameRenderer();
-        this.gameSpeed = 10 * (6 - speed);
-        this.gameFieldImage = new BufferedImage(PLAY_AREA_WIDTH, PLAY_AREA_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        this.gamePanel = new GamePanel(gameRenderer, playerManager, gameStateManager, this, gameFieldImage);
-        this.gameWindow = windowFactory.create(gamePanel, this);
+        this(new GameConfig(speed, players.stream()
+                .map(player -> new PlayerConfig(player.getPlayerName(), player.getColor(), player.getLeftKey(), player.getRightKey()))
+                .toList()), windowFactory);
     }
 
     public void startGame() {
         gameStateManager.setGameState(GameState.RUNNING);
-        javax.swing.Timer timer = new javax.swing.Timer(gameSpeed, e -> {
+        stopGameTimer();
+        gameTimer = new Timer(gameSpeed, e -> {
             GameState state = gameStateManager.getGameState();
             if (state == GameState.RUNNING || state == GameState.GAME_OVER) {
                 updateGameState();
                 gamePanel.repaint();
             }
         });
-        timer.start();
+        gameTimer.start();
     }
 
     public void handleRoundTransition() {
@@ -68,8 +84,17 @@ public class GameEngine {
     }
 
     void quitGame() {
+        stopGameTimer();
+        gameStateManager.stopTimers();
         gameStateManager.setGameState(GameState.GAME_OVER);
         gameWindow.close();
+    }
+
+    private void stopGameTimer() {
+        if (gameTimer != null) {
+            gameTimer.stop();
+            gameTimer = null;
+        }
     }
 
     private void updateGameState() {
@@ -82,22 +107,24 @@ public class GameEngine {
 
     private void updateCurvesAndDraw() {
         Graphics2D g2 = gameFieldImage.createGraphics();
-        List<Player> players = playerManager.getPlayers();
+        try {
+            List<Player> players = playerManager.getPlayers();
 
-        for (int i = 0; i < players.size(); i++) {
-            Player player = players.get(i);
-            Curve curve = player.getCurve();
+            for (int i = 0; i < players.size(); i++) {
+                Player player = players.get(i);
+                Curve curve = player.getCurve();
 
-            if (player.isAlive() && !curve.isGeneratingGap()) {
-                if (collisionManager.isCollisionDetected(curve)) {
-                    handleCollision(g2, i);
-                } else {
-                    gameRenderer.drawPlayerCurve(g2, curve, player.getColor());
+                if (player.isAlive() && !curve.isGeneratingGap()) {
+                    if (collisionManager.isCollisionDetected(curve)) {
+                        handleCollision(g2, i);
+                    } else {
+                        gameRenderer.drawPlayerCurve(g2, curve, player.getColor());
+                    }
                 }
             }
+        } finally {
+            g2.dispose();
         }
-
-        g2.dispose();
     }
 
     private void updatePlayerMovements() {

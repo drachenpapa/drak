@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -73,6 +74,16 @@ class CurveTest {
                 assertThat(point.y).isEqualTo(24);
             });
         }
+
+        @Test
+        @DisplayName("keeps point list bounded when many points are added")
+        void keepsPointListBounded() {
+            for (int i = 0; i < 60_000; i++) {
+                curve.addPoint(i, i);
+            }
+
+            assertThat(curve.getPoints()).hasSizeLessThanOrEqualTo(50_000);
+        }
     }
 
     @Nested
@@ -81,9 +92,9 @@ class CurveTest {
 
         @Test
         @DisplayName("activates after interval elapsed and deactivates afterwards")
-        void activatesAndDeactivates() throws InterruptedException {
+        void activatesAndDeactivates() {
             Curve gapCurve = new Curve(0, 0, 90, 10);
-            Thread.sleep(20);
+            ReflectionTestUtils.setField(gapCurve, "lastGapTimestamp", System.currentTimeMillis() - 20);
 
             assertThat(gapCurve.isGeneratingGap())
                     .as("Gap should be active after interval elapsed")

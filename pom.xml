@@ -18,10 +18,13 @@
     <lombok.version>1.18.46</lombok.version>
     <junit-jupiter.version>6.0.3</junit-jupiter.version>
     <mockito.version>5.23.0</mockito.version>
+    <byte-buddy.version>1.17.7</byte-buddy.version>
     <assertj.version>3.27.7</assertj.version>
     <spring-test.version>7.0.7</spring-test.version>
     <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
     <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
+    <pitest-maven.version>1.19.4</pitest-maven.version>
+    <pitest-junit5-plugin.version>1.2.2</pitest-junit5-plugin.version>
   </properties>
 
   <dependencies>
@@ -51,6 +54,12 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
       <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy-agent</artifactId>
+      <version>${byte-buddy.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -85,6 +94,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</argLine>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -97,6 +109,35 @@
             </manifest>
           </archive>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>${pitest-maven.version}</version>
+        <configuration>
+          <targetClasses>
+            <param>de.drachenpapa.drak.game.logic.*</param>
+          </targetClasses>
+          <targetTests>
+            <param>de.drachenpapa.drak.game.logic.*Test</param>
+          </targetTests>
+          <threads>2</threads>
+          <timestampedReports>false</timestampedReports>
+          <outputFormats>
+            <param>HTML</param>
+            <param>XML</param>
+          </outputFormats>
+          <jvmArgs>
+            <jvmArg>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</jvmArg>
+          </jvmArgs>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-junit5-plugin</artifactId>
+            <version>${pitest-junit5-plugin.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
     </plugins>
   </build>

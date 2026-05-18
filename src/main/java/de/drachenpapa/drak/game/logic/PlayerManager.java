@@ -22,24 +22,13 @@ public class PlayerManager {
     }
 
     int getAlivePlayerCount() {
-        int aliveCount = 0;
-        for (Player player : players) {
-            if (player.isAlive()) {
-                aliveCount++;
-            }
-        }
-        return aliveCount;
+        return (int) players.stream().filter(Player::isAlive).count();
     }
 
     void resetForNextRound() {
         curvePoints.clear();
         for (Player player : players) {
-            player.setCurve(new Curve(
-                    (int) (Math.random() * GameEngine.WINDOW_WIDTH) + 100,
-                    (int) (Math.random() * GameEngine.WINDOW_HEIGHT) + 100,
-                    Math.random() * 360,
-                    (int) (Math.random() * 10) + 1)
-            );
+            player.setCurve(CurveFactory.createRandomCurve());
             player.setAlive(true);
         }
     }

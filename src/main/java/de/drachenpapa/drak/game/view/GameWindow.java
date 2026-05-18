@@ -6,6 +6,9 @@ import de.drachenpapa.drak.game.logic.InputHandler;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static de.drachenpapa.drak.Drak.GAME_TITLE;
 
@@ -15,15 +18,19 @@ import static de.drachenpapa.drak.Drak.GAME_TITLE;
  */
 public class GameWindow {
 
+    private static final Logger logger = Logger.getLogger(GameWindow.class.getName());
+
     private final JFrame frame;
 
     GameWindow(GamePanel gamePanel, GameEngine gameEngine) {
         frame = new JFrame(GAME_TITLE);
-        try {
-            Image logo = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/logo.png"));
-            frame.setIconImage(logo);
-        } catch (Exception ignored) { }
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        URL logoUrl = getClass().getResource("/logo.png");
+        if (logoUrl != null) {
+            frame.setIconImage(Toolkit.getDefaultToolkit().getImage(logoUrl));
+        } else {
+            logger.log(Level.WARNING, "Logo resource /logo.png not found – window icon will not be set");
+        }
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setContentPane(gamePanel);
         frame.pack();
         frame.setResizable(false);

@@ -9,6 +9,7 @@ import java.awt.*;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 @DisplayName("PlayerManager")
 class PlayerManagerTest {
@@ -19,8 +20,8 @@ class PlayerManagerTest {
     @BeforeEach
     void setUp() {
         players = List.of(
-                new Player("Player 1", Color.RED, '1', 'q'),
-                new Player("Player 2", Color.GREEN, 'y', 'x'));
+            new Player("Player 1", Color.RED, '1', 'q'),
+            new Player("Player 2", Color.GREEN, 'y', 'x'));
         playerManager = new PlayerManager(players);
     }
 
@@ -51,11 +52,26 @@ class PlayerManagerTest {
             players.get(1).setAlive(false);
             players.get(0).setCurve(new Curve(1, 1, 0, 1));
             players.get(1).setCurve(new Curve(2, 2, 0, 1));
+            Curve firstBefore = players.get(0).getCurve();
+            Curve secondBefore = players.get(1).getCurve();
+            playerManager.getCurvePoints().add(new Point[]{new Point(10, 10)});
 
             playerManager.resetForNextRound();
 
-            assertThat(players).extracting(Player::isAlive).containsOnly(true);
-            assertThat(players).extracting(Player::getCurve).doesNotContainNull();
+            assertAll(
+                () -> assertThat(players)
+                    .extracting(Player::isAlive)
+                    .containsOnly(true),
+                () -> assertThat(players)
+                    .extracting(Player::getCurve)
+                    .doesNotContainNull(),
+                () -> assertThat(players.getFirst().getCurve())
+                    .isNotSameAs(firstBefore),
+                () -> assertThat(players.get(1).getCurve())
+                    .isNotSameAs(secondBefore),
+                () -> assertThat(playerManager.getCurvePoints())
+                    .isEmpty()
+            );
         }
     }
 
@@ -72,8 +88,10 @@ class PlayerManagerTest {
 
             playerManager.increasePointsForAlivePlayers();
 
-            assertThat(players.get(0).getScore()).isEqualTo(initialScore + 1);
-            assertThat(players.get(1).getScore()).isZero();
+            assertAll(
+                () -> assertThat(players.getFirst().getScore()).isEqualTo(initialScore + 1),
+                () -> assertThat(players.get(1).getScore()).isZero()
+            );
         }
     }
 }

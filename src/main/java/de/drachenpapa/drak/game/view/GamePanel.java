@@ -1,5 +1,7 @@
 package de.drachenpapa.drak.game.view;
 
+import de.drachenpapa.drak.game.config.DisplaySettings;
+import de.drachenpapa.drak.game.config.RenderSettings;
 import de.drachenpapa.drak.game.logic.GameEngine;
 import de.drachenpapa.drak.game.logic.GameStateManager;
 import de.drachenpapa.drak.game.logic.PlayerManager;
@@ -25,19 +27,19 @@ public class GamePanel extends JPanel {
         this.gameStateManager = gameStateManager;
         this.gameEngine = gameEngine;
         this.gameFieldImage = gameFieldImage;
-        setPreferredSize(new Dimension(GameEngine.WINDOW_WIDTH, GameEngine.WINDOW_HEIGHT));
-        setBackground(Color.black);
+        setPreferredSize(new Dimension(DisplaySettings.WINDOW_WIDTH, DisplaySettings.WINDOW_HEIGHT));
+        setBackground(RenderSettings.GAME_FIELD_BACKGROUND);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         gameRenderer.drawGame(
-                g,
-                gameFieldImage,
-                playerManager.getPlayers(),
-                gameStateManager.getGameState(),
-                gameEngine::handleRoundTransition
+            g,
+            gameFieldImage,
+            playerManager.getPlayers(),
+            gameStateManager.getGameState(),
+            gameEngine::handleRoundTransition
         );
     }
 }

@@ -1,7 +1,9 @@
 package de.drachenpapa.drak.game.view;
 
+import de.drachenpapa.drak.game.config.DisplaySettings;
+import de.drachenpapa.drak.game.config.RenderSettings;
+import de.drachenpapa.drak.game.config.UiSettings;
 import de.drachenpapa.drak.game.logic.Curve;
-import de.drachenpapa.drak.game.logic.GameEngine;
 import de.drachenpapa.drak.game.logic.GameState;
 import de.drachenpapa.drak.game.logic.Player;
 
@@ -27,17 +29,17 @@ public class GameRenderer {
     }
 
     public void drawGameField(Graphics g) {
-        g.setColor(Color.black);
-        g.fillRect(0, 0, GameEngine.PLAY_AREA_WIDTH, GameEngine.PLAY_AREA_HEIGHT);
+        g.setColor(RenderSettings.GAME_FIELD_BACKGROUND);
+        g.fillRect(0, 0, DisplaySettings.PLAY_AREA_WIDTH, DisplaySettings.PLAY_AREA_HEIGHT);
     }
 
     public void drawPlayerCurve(Graphics g, Curve curve, Color color) {
         g.setColor(color);
         g.drawLine(
-                curve.getPreviousXPosition(),
-                curve.getPreviousYPosition(),
-                curve.getXPosition(),
-                curve.getYPosition()
+            curve.getPreviousXPosition(),
+            curve.getPreviousYPosition(),
+            curve.getXPosition(),
+            curve.getYPosition()
         );
     }
 
@@ -52,8 +54,8 @@ public class GameRenderer {
             return;
         }
         try {
-            g2.setColor(Color.BLACK);
-            g2.fillRect(0, 0, GameEngine.PLAY_AREA_WIDTH, GameEngine.PLAY_AREA_HEIGHT);
+            g2.setColor(RenderSettings.GAME_FIELD_BACKGROUND);
+            g2.fillRect(0, 0, DisplaySettings.PLAY_AREA_WIDTH, DisplaySettings.PLAY_AREA_HEIGHT);
         } finally {
             g2.dispose();
         }
@@ -65,31 +67,53 @@ public class GameRenderer {
     }
 
     void drawScores(Graphics g, List<Player> players) {
-        g.setColor(Color.gray);
-        g.fillRect(682, 0, 118, GameEngine.WINDOW_HEIGHT);
+        g.setColor(RenderSettings.SCORE_PANEL_BACKGROUND);
+        g.fillRect(DisplaySettings.SCORE_PANEL_X, 0, DisplaySettings.SCORE_PANEL_WIDTH, DisplaySettings.WINDOW_HEIGHT);
 
         for (int i = 0; i < players.size(); i++) {
-            Player player = players.get(i);
-            g.setColor(player.getColor());
-            g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, 16));
-            g.drawString(player.getPlayerName(), 690, 30 + (i * 50));
-            g.drawString(player.getScore() + " pts", 690, 50 + (i * 50));
+            drawScoreRow(g, players.get(i), i);
         }
     }
 
     void drawFinalStatistics(Graphics g, List<Player> players) {
-        g.setColor(Color.black);
-        g.fillRect(0, 0, GameEngine.WINDOW_WIDTH, GameEngine.WINDOW_HEIGHT);
-        g.setColor(Color.white);
-        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, 72));
-        g.drawString("Final Scores", 200, 100);
+        g.setColor(RenderSettings.FINAL_SCREEN_BACKGROUND);
+        g.fillRect(0, 0, DisplaySettings.WINDOW_WIDTH, DisplaySettings.WINDOW_HEIGHT);
+        g.setColor(RenderSettings.FINAL_SCREEN_TEXT);
+        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, UiSettings.FINAL_TITLE_FONT_SIZE));
+        g.drawString(UiSettings.FINAL_SCORES_TITLE, UiSettings.FINAL_TITLE_X, UiSettings.FINAL_TITLE_Y);
 
         for (int i = 0; i < players.size(); i++) {
-            Player player = players.get(i);
-            g.setColor(player.getColor());
-            g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, 36));
-            g.drawString(player.getPlayerName(), 200, 175 + (i * 75));
-            g.drawString(player.getScore() + " pts", 500, 175 + (i * 75));
+            drawFinalScoreRow(g, players.get(i), i);
         }
+    }
+
+    private void drawScoreRow(Graphics g, Player player, int rowIndex) {
+        g.setColor(player.getColor());
+        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, UiSettings.SCORE_FONT_SIZE));
+        g.drawString(
+            player.getPlayerName(),
+            UiSettings.SCORE_NAME_X,
+            UiSettings.SCORE_NAME_BASE_Y + (rowIndex * UiSettings.SCORE_ROW_OFFSET_Y)
+        );
+        g.drawString(
+            player.getScore() + UiSettings.SCORE_SUFFIX,
+            UiSettings.SCORE_NAME_X,
+            UiSettings.SCORE_POINTS_BASE_Y + (rowIndex * UiSettings.SCORE_ROW_OFFSET_Y)
+        );
+    }
+
+    private void drawFinalScoreRow(Graphics g, Player player, int rowIndex) {
+        g.setColor(player.getColor());
+        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, UiSettings.FINAL_ROW_FONT_SIZE));
+        g.drawString(
+            player.getPlayerName(),
+            UiSettings.FINAL_ROW_NAME_X,
+            UiSettings.FINAL_ROW_BASE_Y + (rowIndex * UiSettings.FINAL_ROW_OFFSET_Y)
+        );
+        g.drawString(
+            player.getScore() + UiSettings.SCORE_SUFFIX,
+            UiSettings.FINAL_ROW_POINTS_X,
+            UiSettings.FINAL_ROW_BASE_Y + (rowIndex * UiSettings.FINAL_ROW_OFFSET_Y)
+        );
     }
 }

@@ -1,6 +1,6 @@
 package de.drachenpapa.drak.game.logic;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Objects;
 
 /**
@@ -15,6 +15,9 @@ public record PlayerConfig(String playerName, Color color, char leftKey, char ri
         Objects.requireNonNull(color, "Player color must not be null.");
         if (Character.isWhitespace(leftKey) || Character.isWhitespace(rightKey)) {
             throw new IllegalArgumentException("Control keys must not be whitespace.");
+        }
+        if (leftKey == rightKey) {
+            throw new IllegalArgumentException("Left and right control keys must differ.");
         }
     }
 

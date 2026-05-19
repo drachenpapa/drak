@@ -1,5 +1,6 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.game.config.CurvePhysicsSettings;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,16 +17,9 @@ import java.util.random.RandomGenerator;
 @Setter
 public class Curve {
 
-    private static final long MAX_GAP_INTERVAL = 6000L;
-    private static final long MIN_GAP_INTERVAL = 1000L;
-    private static final int MIN_GAP_LENGTH = 2;
-    private static final int MAX_GAP_LENGTH = 4;
-    private static final double STEP_SIZE = 6.0;
-    private static final double TURN_ANGLE = 10.0;
-    private static final RandomGenerator RNG = RandomGenerator.getDefault();
-    private static final int MAX_STORED_POINTS = 50_000;
-    private static final int POINT_TRIM_CHUNK_SIZE = 1_000;
-
+    private static final RandomGenerator DEFAULT_RNG = RandomGenerator.getDefault();
+    private final RandomGenerator randomGenerator;
+    private final List<Point> points = new ArrayList<>();
     private double directionAngle;
     private int xPosition;
     private int yPosition;
@@ -35,9 +29,12 @@ public class Curve {
     private long lastGapTimestamp;
     private long gapInterval;
     private boolean isGapActive;
-    private final List<Point> points = new ArrayList<>();
 
     Curve(int xPosition, int yPosition, double directionAngle, long gapInterval) {
+        this(xPosition, yPosition, directionAngle, gapInterval, DEFAULT_RNG);
+    }
+
+    Curve(int xPosition, int yPosition, double directionAngle, long gapInterval, RandomGenerator randomGenerator) {
         this.xPosition = xPosition;
         this.yPosition = yPosition;
         this.previousXPosition = xPosition;
@@ -46,6 +43,7 @@ public class Curve {
         this.gapInterval = gapInterval;
         this.isGapActive = false;
         this.gapLengthCounter = 0;
+        this.randomGenerator = randomGenerator;
         this.lastGapTimestamp = System.currentTimeMillis();
         addPoint(xPosition, yPosition);
     }
@@ -54,8 +52,8 @@ public class Curve {
         previousXPosition = xPosition;
         previousYPosition = yPosition;
         double radians = Math.toRadians(directionAngle);
-        xPosition += (int) (Math.cos(radians) * STEP_SIZE);
-        yPosition -= (int) (Math.sin(radians) * STEP_SIZE);
+        xPosition += (int) (Math.cos(radians) * CurvePhysicsSettings.STEP_SIZE);
+        yPosition -= (int) (Math.sin(radians) * CurvePhysicsSettings.STEP_SIZE);
         addPoint(xPosition, yPosition);
     }
 
@@ -65,19 +63,22 @@ public class Curve {
     }
 
     private void trimOldPointsIfNeeded() {
-        if (points.size() <= MAX_STORED_POINTS) {
+        if (points.size() <= CurvePhysicsSettings.MAX_STORED_POINTS) {
             return;
         }
-        int trimCount = Math.min(POINT_TRIM_CHUNK_SIZE, points.size() - MAX_STORED_POINTS);
+        int trimCount = Math.min(
+            CurvePhysicsSettings.POINT_TRIM_CHUNK_SIZE,
+            points.size() - CurvePhysicsSettings.MAX_STORED_POINTS
+        );
         points.subList(0, trimCount).clear();
     }
 
     void turnLeft() {
-        directionAngle = (directionAngle + TURN_ANGLE) % 360;
+        directionAngle = (directionAngle + CurvePhysicsSettings.TURN_ANGLE_DEGREES) % CurvePhysicsSettings.ANGLE_FULL_CIRCLE;
     }
 
     void turnRight() {
-        directionAngle = (directionAngle - TURN_ANGLE + 360) % 360;
+        directionAngle = (directionAngle - CurvePhysicsSettings.TURN_ANGLE_DEGREES + CurvePhysicsSettings.ANGLE_FULL_CIRCLE) % CurvePhysicsSettings.ANGLE_FULL_CIRCLE;
     }
 
     boolean isGeneratingGap() {
@@ -91,8 +92,14 @@ public class Curve {
     private void startNewGap(long currentTime) {
         isGapActive = true;
         lastGapTimestamp = currentTime;
-        gapInterval = RNG.nextLong(MIN_GAP_INTERVAL, MAX_GAP_INTERVAL);
-        gapLengthCounter = RNG.nextInt(MIN_GAP_LENGTH, MAX_GAP_LENGTH + 1);
+        gapInterval = randomGenerator.nextLong(
+            CurvePhysicsSettings.MIN_GAP_INTERVAL_MS,
+            CurvePhysicsSettings.MAX_GAP_INTERVAL_MS
+        );
+        gapLengthCounter = randomGenerator.nextInt(
+            CurvePhysicsSettings.MIN_GAP_LENGTH,
+            CurvePhysicsSettings.MAX_GAP_LENGTH + 1
+        );
     }
 
     private boolean continueGap() {

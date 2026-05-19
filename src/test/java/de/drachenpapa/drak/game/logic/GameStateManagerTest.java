@@ -7,11 +7,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.awt.Color;
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @DisplayName("GameStateManager")
@@ -27,9 +32,21 @@ class GameStateManagerTest {
     @BeforeEach
     void setUp() {
         players = List.of(
-                new Player("Player 1", Color.RED, '1', 'q'),
-                new Player("Player 2", Color.GREEN, 'y', 'x'));
+            new Player("Player 1", Color.RED, '1', 'q'),
+            new Player("Player 2", Color.GREEN, 'y', 'x'));
         gameStateManager = new GameStateManager(playerManager, 3);
+    }
+
+    @Test
+    @DisplayName("stopTimers stops and clears existing timer")
+    void stopTimersStopsAndClearsExistingTimer() {
+        Timer existingTimer = org.mockito.Mockito.mock(Timer.class);
+        ReflectionTestUtils.setField(gameStateManager, "roundTransitionTimer", existingTimer);
+
+        gameStateManager.stopTimers();
+
+        verify(existingTimer).stop();
+        assertThat(ReflectionTestUtils.getField(gameStateManager, "roundTransitionTimer")).isNull();
     }
 
     @Nested
@@ -54,6 +71,7 @@ class GameStateManagerTest {
         void transitionsToReadyForNextRoundWithOneAlivePlayer() {
             players.get(0).setAlive(true);
             players.get(1).setAlive(false);
+            when(playerManager.getAlivePlayerCount()).thenReturn(1);
 
             gameStateManager.checkForGameEnd();
 
@@ -85,9 +103,77 @@ class GameStateManagerTest {
         void setsStateToPaused() {
             gameStateManager.setGameState(GameState.READY_FOR_NEXT_ROUND);
 
-            gameStateManager.handleRoundTransition(() -> {});
+            gameStateManager.handleRoundTransition(() -> {
+            });
 
             assertThat(gameStateManager.getGameState()).isEqualTo(GameState.PAUSED);
+        }
+
+        @Test
+        @DisplayName("configures transition timer as one-shot")
+        void configuresTransitionTimerAsOneShot() {
+            gameStateManager.setGameState(GameState.READY_FOR_NEXT_ROUND);
+
+            gameStateManager.handleRoundTransition(() -> {
+            });
+
+            Timer timer = (Timer) ReflectionTestUtils.getField(gameStateManager, "roundTransitionTimer");
+            assertAll(
+                () -> assertThat(timer).isNotNull(),
+                () -> {
+                    assert timer != null;
+                    assertThat(timer.isRepeats()).isFalse();
+                }
+            );
+        }
+
+        @Test
+        @DisplayName("runs reset once, transitions to RUNNING, and clears timer")
+        void runsResetOnceTransitionsAndClearsTimer() {
+            gameStateManager.setGameState(GameState.READY_FOR_NEXT_ROUND);
+            AtomicInteger resetCalls = new AtomicInteger(0);
+
+            gameStateManager.handleRoundTransition(resetCalls::incrementAndGet);
+
+            Timer timer = (Timer) ReflectionTestUtils.getField(gameStateManager, "roundTransitionTimer");
+            assertThat(timer).isNotNull();
+            for (var listener : timer.getActionListeners()) {
+                listener.actionPerformed(null);
+            }
+
+            assertAll(
+                () -> assertThat(resetCalls.get()).isEqualTo(1),
+                () -> assertThat(gameStateManager.getGameState()).isEqualTo(GameState.RUNNING),
+                () -> assertThat(ReflectionTestUtils.getField(gameStateManager, "roundTransitionTimer")).isNull()
+            );
+        }
+
+        @Test
+        @DisplayName("stops existing transition timer before creating a new one")
+        void stopsExistingTransitionTimerBeforeCreatingNewOne() {
+            Timer existingTimer = org.mockito.Mockito.mock(Timer.class);
+            ReflectionTestUtils.setField(gameStateManager, "roundTransitionTimer", existingTimer);
+            gameStateManager.setGameState(GameState.READY_FOR_NEXT_ROUND);
+
+            gameStateManager.handleRoundTransition(() -> {
+            });
+
+            verify(existingTimer).stop();
+        }
+
+        @Test
+        @DisplayName("starts transition timer after setup")
+        void startsTransitionTimerAfterSetup() {
+            gameStateManager.setGameState(GameState.READY_FOR_NEXT_ROUND);
+
+            gameStateManager.handleRoundTransition(() -> {
+            });
+
+            Timer timer = (Timer) ReflectionTestUtils.getField(gameStateManager, "roundTransitionTimer");
+            assertThat(timer)
+                .isNotNull()
+                .extracting(Timer::isRunning)
+                .isEqualTo(true);
         }
     }
 }

@@ -1,5 +1,10 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.game.config.CurvePhysicsSettings;
+import de.drachenpapa.drak.game.config.CurveSpawnSettings;
+import de.drachenpapa.drak.game.config.DisplaySettings;
+
+import java.util.Objects;
 import java.util.random.RandomGenerator;
 
 /**
@@ -7,19 +12,16 @@ import java.util.random.RandomGenerator;
  */
 final class CurveFactory {
 
-    private static final int SPAWN_POSITION_OFFSET = 100;
-    private static final int MIN_GAP_INTERVAL = 1;
-    private static final int MAX_GAP_INTERVAL = 10;
-    private static final RandomGenerator RNG = RandomGenerator.getDefault();
-
     private CurveFactory() {
     }
 
-    static Curve createRandomCurve() {
-        int xPosition = RNG.nextInt(GameEngine.WINDOW_WIDTH) + SPAWN_POSITION_OFFSET;
-        int yPosition = RNG.nextInt(GameEngine.WINDOW_HEIGHT) + SPAWN_POSITION_OFFSET;
-        double direction = RNG.nextDouble(360);
-        int gapInterval = RNG.nextInt(MIN_GAP_INTERVAL, MAX_GAP_INTERVAL + 1);
-        return new Curve(xPosition, yPosition, direction, gapInterval);
+
+    static Curve createRandomCurve(RandomGenerator randomGenerator) {
+        RandomGenerator rng = Objects.requireNonNull(randomGenerator, "randomGenerator");
+        int xPosition = rng.nextInt(DisplaySettings.WINDOW_WIDTH) + CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+        int yPosition = rng.nextInt(DisplaySettings.WINDOW_HEIGHT) + CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+        double direction = rng.nextDouble(CurvePhysicsSettings.ANGLE_FULL_CIRCLE);
+        int gapInterval = rng.nextInt(CurveSpawnSettings.MIN_INITIAL_GAP_INTERVAL, CurveSpawnSettings.MAX_INITIAL_GAP_INTERVAL + 1);
+        return new Curve(xPosition, yPosition, direction, gapInterval, rng);
     }
 }

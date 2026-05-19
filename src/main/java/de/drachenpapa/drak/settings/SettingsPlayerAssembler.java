@@ -16,10 +16,17 @@ class SettingsPlayerAssembler {
             if (!panel.checkBox.isSelected()) {
                 continue;
             }
-            char leftKey = panel.leftKeyButton.getText().charAt(0);
-            char rightKey = panel.rightKeyButton.getText().charAt(0);
+            char leftKey = extractSingleKey(panel.leftKeyButton.getText(), "left");
+            char rightKey = extractSingleKey(panel.rightKeyButton.getText(), "right");
             playerConfigs.add(new PlayerConfig(panel.nameField.getText(), panel.colorButton.getBackground(), leftKey, rightKey));
         }
         return playerConfigs;
+    }
+
+    private char extractSingleKey(String keyText, String side) {
+        if (keyText == null || keyText.length() != 1 || Character.isWhitespace(keyText.charAt(0))) {
+            throw new IllegalStateException("Invalid %s control key in settings UI.".formatted(side));
+        }
+        return keyText.charAt(0);
     }
 }

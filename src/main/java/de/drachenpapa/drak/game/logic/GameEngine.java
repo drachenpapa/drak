@@ -1,15 +1,18 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.game.config.BalanceSettings;
+import de.drachenpapa.drak.game.config.DisplaySettings;
+import de.drachenpapa.drak.game.view.DefaultGameWindowFactory;
 import de.drachenpapa.drak.game.view.GamePanel;
 import de.drachenpapa.drak.game.view.GameRenderer;
 import de.drachenpapa.drak.game.view.GameWindow;
 import de.drachenpapa.drak.game.view.GameWindowFactory;
-import de.drachenpapa.drak.game.view.DefaultGameWindowFactory;
 
-import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Game engine which handles game logic and lifecycle management.
@@ -17,13 +20,6 @@ import java.util.List;
  * Coordinates player actions, collision handling, and rendering.
  */
 public class GameEngine {
-
-    public static final int WINDOW_WIDTH = 800;
-    public static final int WINDOW_HEIGHT = 600;
-    public static final int PLAY_AREA_WIDTH = 680;
-    public static final int PLAY_AREA_HEIGHT = WINDOW_HEIGHT;
-    private static final int SPEED_DELAY_MULTIPLIER = 10;
-    private static final int SPEED_LEVEL_INVERSION_OFFSET = 6;
 
     private final BufferedImage gameFieldImage;
     private final CollisionManager collisionManager;
@@ -40,25 +36,28 @@ public class GameEngine {
     }
 
     GameEngine(GameConfig config, GameWindowFactory windowFactory) {
-        List<Player> players = config.createPlayers();
-        this.playerManager = new PlayerManager(players);
-        this.collisionManager = new CollisionManager(playerManager.getPlayers(), playerManager.getCurvePoints(), playerManager);
-        this.gameStateManager = new GameStateManager(playerManager, (players.size() - 1) * 10);
-        this.gameRenderer = new GameRenderer();
-        this.gameSpeed = SPEED_DELAY_MULTIPLIER * (SPEED_LEVEL_INVERSION_OFFSET - config.speed());
-        this.gameFieldImage = new BufferedImage(PLAY_AREA_WIDTH, PLAY_AREA_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        Objects.requireNonNull(config, "config");
+        Objects.requireNonNull(windowFactory, "windowFactory");
+
+        EngineSetup setup = EngineSetup.from(config);
+        this.playerManager = setup.playerManager();
+        this.collisionManager = setup.collisionManager();
+        this.gameStateManager = setup.gameStateManager();
+        this.gameRenderer = setup.gameRenderer();
+        this.gameSpeed = setup.gameSpeed();
+        this.gameFieldImage = setup.gameFieldImage();
         this.gamePanel = new GamePanel(gameRenderer, playerManager, gameStateManager, this, gameFieldImage);
         this.gameWindow = windowFactory.create(gamePanel, this);
     }
 
-    public GameEngine(List<Player> players, int speed) {
-        this(players, speed, new DefaultGameWindowFactory());
+    GameEngine(List<Player> players, int speed, GameWindowFactory windowFactory) {
+        this(new GameConfig(speed, toPlayerConfigs(players)), windowFactory);
     }
 
-    GameEngine(List<Player> players, int speed, GameWindowFactory windowFactory) {
-        this(new GameConfig(speed, players.stream()
-                .map(player -> new PlayerConfig(player.getPlayerName(), player.getColor(), player.getLeftKey(), player.getRightKey()))
-                .toList()), windowFactory);
+    private static List<PlayerConfig> toPlayerConfigs(List<Player> players) {
+        return players.stream()
+            .map(player -> new PlayerConfig(player.getPlayerName(), player.getColor(), player.getLeftKey(), player.getRightKey()))
+            .toList();
     }
 
     public void startGame() {
@@ -152,5 +151,32 @@ public class GameEngine {
     private void handleCollision(Graphics g, int playerIndex) {
         collisionManager.handleCollision(playerIndex);
         gameRenderer.drawScorePanel(g, playerManager.getPlayers(), this::checkForGameEnd);
+    }
+
+    private record EngineSetup(PlayerManager playerManager,
+                               CollisionManager collisionManager,
+                               GameStateManager gameStateManager,
+                               GameRenderer gameRenderer,
+                               int gameSpeed,
+                               BufferedImage gameFieldImage) {
+
+        private static int calculateWinningScore(int playerCount) {
+            return (playerCount - 1) * BalanceSettings.POINTS_PER_OPPONENT;
+        }
+
+        private static int calculateGameSpeed(int speedLevel) {
+            return BalanceSettings.SPEED_DELAY_MULTIPLIER * (BalanceSettings.SPEED_LEVEL_INVERSION_OFFSET - speedLevel);
+        }
+
+        private static EngineSetup from(GameConfig config) {
+            List<Player> players = config.createPlayers();
+            PlayerManager playerManager = new PlayerManager(players);
+            CollisionManager collisionManager = new CollisionManager(playerManager.getPlayers(), playerManager.getCurvePoints(), playerManager);
+            GameStateManager gameStateManager = new GameStateManager(playerManager, calculateWinningScore(players.size()));
+            GameRenderer gameRenderer = new GameRenderer();
+            int gameSpeed = calculateGameSpeed(config.speed());
+            BufferedImage gameFieldImage = new BufferedImage(DisplaySettings.PLAY_AREA_WIDTH, DisplaySettings.PLAY_AREA_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+            return new EngineSetup(playerManager, collisionManager, gameStateManager, gameRenderer, gameSpeed, gameFieldImage);
+        }
     }
 }

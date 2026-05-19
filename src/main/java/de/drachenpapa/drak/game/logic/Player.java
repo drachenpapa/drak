@@ -4,6 +4,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.awt.*;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.random.RandomGenerator;
 
 /**
  * Represents a player in the game.
@@ -20,36 +24,57 @@ public class Player {
     private final char leftKey;
     @Getter
     private final char rightKey;
-
+    private final AtomicInteger score = new AtomicInteger(0);
+    private final AtomicReference<Curve> curve = new AtomicReference<>();
+    private final RandomGenerator curveRandomGenerator;
     @Getter
     @Setter
-    private Curve curve;
+    private volatile boolean leftKeyPressed = false;
     @Getter
     @Setter
-    private boolean leftKeyPressed = false;
+    private volatile boolean rightKeyPressed = false;
     @Getter
     @Setter
-    private boolean rightKeyPressed = false;
-    @Getter
-    @Setter
-    private int score = 0;
-    @Getter
-    @Setter
-    private boolean alive = true;
+    private volatile boolean alive = true;
 
     public Player(String playerName, Color color, char leftKey, char rightKey) {
+        this(playerName, color, leftKey, rightKey, RandomGenerator.getDefault());
+    }
+
+    Player(String playerName, Color color, char leftKey, char rightKey, RandomGenerator curveRandomGenerator) {
         this.playerName = playerName;
         this.color = color;
         this.leftKey = leftKey;
         this.rightKey = rightKey;
-        this.curve = createNewCurve();
+        this.curveRandomGenerator = Objects.requireNonNull(curveRandomGenerator, "curveRandomGenerator");
+        this.curve.set(createNewCurve());
     }
 
     void increaseScore() {
-        this.score++;
+        score.incrementAndGet();
+    }
+
+    public int getScore() {
+        return score.get();
+    }
+
+    public void setScore(int score) {
+        this.score.set(score);
+    }
+
+    public Curve getCurve() {
+        return curve.get();
+    }
+
+    public void setCurve(Curve curve) {
+        this.curve.set(Objects.requireNonNull(curve, "curve"));
+    }
+
+    void resetCurve() {
+        curve.set(createNewCurve());
     }
 
     private Curve createNewCurve() {
-        return CurveFactory.createRandomCurve();
+        return CurveFactory.createRandomCurve(curveRandomGenerator);
     }
 }

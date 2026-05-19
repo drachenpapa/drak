@@ -1,13 +1,19 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.game.config.CurvePhysicsSettings;
+import de.drachenpapa.drak.game.config.DisplaySettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.awt.Color;
+import java.awt.*;
+import java.util.random.RandomGenerator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @DisplayName("Player")
 class PlayerTest {
@@ -40,6 +46,25 @@ class PlayerTest {
         void hasNonNullCurve() {
             assertThat(player.getCurve()).isNotNull();
         }
+
+        @Test
+        @DisplayName("uses injected random generator for initial curve")
+        void usesInjectedRandomGeneratorForInitialCurve() {
+            RandomGenerator rng = mock(RandomGenerator.class);
+            when(rng.nextInt(DisplaySettings.WINDOW_WIDTH)).thenReturn(10);
+            when(rng.nextInt(DisplaySettings.WINDOW_HEIGHT)).thenReturn(20);
+            when(rng.nextDouble(CurvePhysicsSettings.ANGLE_FULL_CIRCLE)).thenReturn(90.0);
+            when(rng.nextInt(1, 11)).thenReturn(7);
+
+            Player deterministicPlayer = new Player("P", Color.BLUE, 'a', 'd', rng);
+            Curve curve = deterministicPlayer.getCurve();
+
+            assertThat(curve.getXPosition()).isEqualTo(110);
+            assertThat(curve.getYPosition()).isEqualTo(120);
+            assertThat(curve.getDirectionAngle()).isEqualTo(90.0);
+            assertThat(curve.getGapInterval()).isEqualTo(7);
+            assertThat(ReflectionTestUtils.getField(curve, "randomGenerator")).isSameAs(rng);
+        }
     }
 
     @Nested
@@ -52,6 +77,18 @@ class PlayerTest {
             Curve newCurve = new Curve(200, 300, 90, 5);
             player.setCurve(newCurve);
             assertThat(player.getCurve()).isEqualTo(newCurve);
+        }
+
+        @Test
+        @DisplayName("resetCurve replaces active curve reference")
+        void resetCurveReplacesActiveCurveReference() {
+            Curve before = player.getCurve();
+
+            player.resetCurve();
+
+            assertThat(player.getCurve())
+                .isNotNull()
+                .isNotSameAs(before);
         }
     }
 

@@ -4,10 +4,11 @@ import de.drachenpapa.drak.game.logic.PlayerConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @DisplayName("SettingsPlayerAssembler")
 class SettingsPlayerAssemblerTest {
@@ -30,12 +31,10 @@ class SettingsPlayerAssemblerTest {
 
         List<PlayerConfig> configs = assembler.createSelectedPlayerConfigs(new PlayerSettingsPanel[]{first, second});
 
-        assertThat(configs).hasSize(1);
-        PlayerConfig config = configs.getFirst();
-        assertThat(config.playerName()).isEqualTo("Alice");
-        assertThat(config.color()).isEqualTo(Color.MAGENTA);
-        assertThat(config.leftKey()).isEqualTo('a');
-        assertThat(config.rightKey()).isEqualTo('d');
+        assertThat(configs)
+            .hasSize(1)
+            .extracting(PlayerConfig::playerName, PlayerConfig::color, PlayerConfig::leftKey, PlayerConfig::rightKey)
+            .containsExactly(tuple("Alice", Color.MAGENTA, 'a', 'd'));
     }
 
     @Test

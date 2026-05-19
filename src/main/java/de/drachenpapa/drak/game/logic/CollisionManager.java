@@ -1,20 +1,17 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.game.config.CollisionSettings;
+import de.drachenpapa.drak.game.config.DisplaySettings;
+
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-
-import static de.drachenpapa.drak.game.logic.GameEngine.PLAY_AREA_HEIGHT;
-import static de.drachenpapa.drak.game.logic.GameEngine.PLAY_AREA_WIDTH;
 
 /**
  * Handles collision detection and collision-related actions for all players.
  * Checks for self-collisions, collisions with other curves, and manages collision consequences.
  */
 class CollisionManager {
-
-    private static final int CURVE_WIDTH = 3;
-    private static final int SELF_COLLISION_SKIP = 10;
 
     private final List<Player> players;
     private final List<Point[]> curvePoints;
@@ -40,37 +37,69 @@ class CollisionManager {
         double x = curve.getXPosition();
         double y = curve.getYPosition();
 
-        if (x >= PLAY_AREA_WIDTH) {
+        if (x >= DisplaySettings.PLAY_AREA_WIDTH) {
             curve.setXPosition(0);
             curve.setPreviousXPosition(0);
         } else if (x < 0) {
-            curve.setXPosition(PLAY_AREA_WIDTH - 1);
-            curve.setPreviousXPosition(PLAY_AREA_WIDTH - 1);
+            curve.setXPosition(DisplaySettings.PLAY_AREA_WIDTH - 1);
+            curve.setPreviousXPosition(DisplaySettings.PLAY_AREA_WIDTH - 1);
         }
 
-        if (y >= PLAY_AREA_HEIGHT) {
+        if (y >= DisplaySettings.PLAY_AREA_HEIGHT) {
             curve.setYPosition(0);
             curve.setPreviousYPosition(0);
         } else if (y < 0) {
-            curve.setYPosition(PLAY_AREA_HEIGHT - 1);
-            curve.setPreviousYPosition(PLAY_AREA_HEIGHT - 1);
+            curve.setYPosition(DisplaySettings.PLAY_AREA_HEIGHT - 1);
+            curve.setPreviousYPosition(DisplaySettings.PLAY_AREA_HEIGHT - 1);
         }
     }
 
     private boolean detectCurveCollision(Curve curve) {
-        int x = curve.getXPosition();
-        int y = curve.getYPosition();
+        Point[] movementPoints = buildSegmentPoints(
+            curve.getPreviousXPosition(),
+            curve.getPreviousYPosition(),
+            curve.getXPosition(),
+            curve.getYPosition()
+        );
 
-        if (isOutOfBounds(x, y) || isSelfCollision(curve, x, y) || isOtherCurveCollision(x, y)) {
-            return true;
+        for (Point point : movementPoints) {
+            int x = point.x;
+            int y = point.y;
+            if (isOutOfBounds(x, y) || isSelfCollision(curve, x, y) || isOtherCurveCollision(x, y)) {
+                return true;
+            }
         }
 
-        curvePoints.add(new Point[]{new Point(x, y)});
+        curvePoints.add(movementPoints);
         return false;
     }
 
+    private Point[] buildSegmentPoints(int fromX, int fromY, int toX, int toY) {
+        int dx = toX - fromX;
+        int dy = toY - fromY;
+        int steps = Math.max(Math.abs(dx), Math.abs(dy));
+        if (steps > CollisionSettings.MAX_INTERPOLATION_STEPS_PER_TICK) {
+            return new Point[]{new Point(toX, toY)};
+        }
+        if (steps == 0) {
+            return new Point[]{new Point(toX, toY)};
+        }
+
+        Point[] points = new Point[steps + 1];
+        for (int i = 0; i <= steps; i++) {
+            double ratio = (double) i / steps;
+            int x = (int) Math.round(fromX + (dx * ratio));
+            int y = (int) Math.round(fromY + (dy * ratio));
+            points[i] = new Point(x, y);
+        }
+        return points;
+    }
+
     private boolean isOutOfBounds(int x, int y) {
-        return x < 0 || x >= PLAY_AREA_WIDTH || y < 0 || y >= PLAY_AREA_HEIGHT;
+        return x < 0
+            || x >= DisplaySettings.PLAY_AREA_WIDTH
+            || y < 0
+            || y >= DisplaySettings.PLAY_AREA_HEIGHT;
     }
 
     private boolean isSelfCollision(Curve curve, int x, int y) {
@@ -78,22 +107,23 @@ class CollisionManager {
         int len = points.size();
 
         return points.stream()
-                .limit(Math.max(0, len - SELF_COLLISION_SKIP))
-                .anyMatch(p -> isPointCollision(p, x, y));
+            .limit(Math.max(0, len - CollisionSettings.SELF_COLLISION_SKIP))
+            .anyMatch(p -> isPointCollision(p, x, y));
     }
 
     private boolean isOtherCurveCollision(int x, int y) {
         return curvePoints.stream()
-                .flatMap(Arrays::stream)
-                .anyMatch(p -> isPointCollision(p, x, y));
+            .flatMap(Arrays::stream)
+            .anyMatch(p -> isPointCollision(p, x, y));
     }
 
     private boolean isPointCollision(Point p, int x, int y) {
-        if (Math.abs(p.x - x) <= CURVE_WIDTH && Math.abs(p.y - y) <= CURVE_WIDTH) {
+        if (Math.abs(p.x - x) <= CollisionSettings.CURVE_WIDTH
+            && Math.abs(p.y - y) <= CollisionSettings.CURVE_WIDTH) {
             double deltaX = (double) p.x - x;
             double deltaY = (double) p.y - y;
             double dist = Math.hypot(deltaX, deltaY);
-            return dist < CURVE_WIDTH;
+            return dist < CollisionSettings.CURVE_WIDTH;
         }
 
         return false;

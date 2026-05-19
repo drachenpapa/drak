@@ -28,14 +28,14 @@ public class PlayerManager {
     void resetForNextRound() {
         curvePoints.clear();
         for (Player player : players) {
-            player.setCurve(CurveFactory.createRandomCurve());
+            player.resetCurve();
             player.setAlive(true);
         }
     }
 
     void increasePointsForAlivePlayers() {
         players.stream()
-                .filter(Player::isAlive)
-                .forEach(Player::increaseScore);
+            .filter(Player::isAlive)
+            .forEach(Player::increaseScore);
     }
 }

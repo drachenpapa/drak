@@ -9,6 +9,8 @@ import lombok.Setter;
  */
 public class GameStateManager {
 
+    private static final int ROUND_TRANSITION_DELAY_MS = 1_000;
+
     private final int winningScore;
     private final PlayerManager playerManager;
     private javax.swing.Timer roundTransitionTimer;
@@ -38,11 +40,15 @@ public class GameStateManager {
         if (gameState == GameState.READY_FOR_NEXT_ROUND) {
             gameState = GameState.PAUSED;
             stopTimers();
-            roundTransitionTimer = new javax.swing.Timer(1000, e -> {
-                resetRound.run();
-                gameState = GameState.RUNNING;
-                stopTimers();
+            roundTransitionTimer = new javax.swing.Timer(ROUND_TRANSITION_DELAY_MS, e -> {
+                try {
+                    resetRound.run();
+                    gameState = GameState.RUNNING;
+                } finally {
+                    stopTimers();
+                }
             });
+            roundTransitionTimer.setRepeats(false);
             roundTransitionTimer.start();
         }
     }

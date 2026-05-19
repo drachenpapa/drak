@@ -14,48 +14,21 @@ class OptionsControlPanel extends JPanel {
 
     OptionsControlPanel(int initialSpeed, int minSpeed, int maxSpeed, ActionListener actionListener) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBackground(new Color(205, 205, 205));
+        setBackground(SettingsConstants.Ui.PANEL_BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(0, 6, 6, 9));
 
-        JLabel speedLabel = new JLabel("Speed Level:");
-        speedLabel.setPreferredSize(new Dimension(90, 25));
-        speedSpinner = new JSpinner(new SpinnerNumberModel(initialSpeed, minSpeed, maxSpeed, 1));
-        speedSpinner.setPreferredSize(new Dimension(40, 25));
+        speedSpinner = createSpeedSpinner(initialSpeed, minSpeed, maxSpeed);
+        JPanel speedPanel = createSpeedPanel(speedSpinner);
+        JButton loadDefaultsButton = createLoadDefaultsButton(actionListener);
 
-        JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        speedPanel.setOpaque(false);
-        speedPanel.add(speedLabel);
-        speedPanel.add(speedSpinner);
+        JButton startButton = createStartButton(actionListener);
 
-        JButton loadDefaultsButton = new JButton("Load Defaults");
-        loadDefaultsButton.setFocusPainted(false);
-        loadDefaultsButton.setBackground(new Color(180, 180, 180));
-        loadDefaultsButton.addActionListener(actionListener);
+        JPanel topRow = createTopRow(speedPanel, loadDefaultsButton);
 
-        JButton startButton = new JButton("Start Game");
-        startButton.setPreferredSize(new Dimension(140, 35));
-        startButton.setMaximumSize(new Dimension(140, 35));
-        startButton.setFocusPainted(false);
-        startButton.setBackground(new Color(80, 150, 240));
-        startButton.setForeground(Color.WHITE);
-        startButton.setFont(startButton.getFont().deriveFont(Font.BOLD));
-        startButton.addActionListener(actionListener);
-
-        JPanel topRow = new JPanel();
-        topRow.setLayout(new BoxLayout(topRow, BoxLayout.X_AXIS));
-        topRow.setOpaque(false);
-        topRow.add(speedPanel);
-        topRow.add(Box.createHorizontalGlue());
-        topRow.add(loadDefaultsButton);
-        topRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-
-        JPanel buttonRow = new JPanel();
-        buttonRow.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        buttonRow.setOpaque(false);
-        buttonRow.add(startButton);
+        JPanel buttonRow = createButtonRow(startButton);
 
         add(topRow);
-        add(Box.createRigidArea(new Dimension(0, 8)));
+        add(Box.createRigidArea(new Dimension(0, SettingsConstants.Ui.OPTIONS_MAIN_SPACER)));
         add(buttonRow);
     }
 
@@ -63,7 +36,63 @@ class OptionsControlPanel extends JPanel {
         return (int) speedSpinner.getValue();
     }
 
+    private JSpinner createSpeedSpinner(int initialSpeed, int minSpeed, int maxSpeed) {
+        JSpinner spinner = new JSpinner(new SpinnerNumberModel(initialSpeed, minSpeed, maxSpeed, 1));
+        spinner.setPreferredSize(new Dimension(SettingsConstants.Ui.OPTIONS_SPEED_SPINNER_WIDTH, SettingsConstants.Ui.OPTIONS_SPEED_SPINNER_HEIGHT));
+        return spinner;
+    }
+
+    private JPanel createSpeedPanel(JSpinner spinner) {
+        JLabel speedLabel = new JLabel(SettingsConstants.Text.SPEED_LEVEL_LABEL);
+        speedLabel.setPreferredSize(new Dimension(SettingsConstants.Ui.OPTIONS_SPEED_LABEL_WIDTH, SettingsConstants.Ui.OPTIONS_SPEED_LABEL_HEIGHT));
+
+        JPanel speedPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        speedPanel.setOpaque(false);
+        speedPanel.add(speedLabel);
+        speedPanel.add(spinner);
+        return speedPanel;
+    }
+
+    private JButton createLoadDefaultsButton(ActionListener actionListener) {
+        JButton loadDefaultsButton = new JButton(SettingsConstants.Commands.LOAD_DEFAULTS);
+        loadDefaultsButton.setFocusPainted(false);
+        loadDefaultsButton.setBackground(SettingsConstants.Ui.LOAD_DEFAULTS_BUTTON_BACKGROUND);
+        loadDefaultsButton.addActionListener(actionListener);
+        return loadDefaultsButton;
+    }
+
+    private JPanel createTopRow(JPanel speedPanel, JButton loadDefaultsButton) {
+        JPanel topRow = new JPanel();
+        topRow.setLayout(new BoxLayout(topRow, BoxLayout.X_AXIS));
+        topRow.setOpaque(false);
+        topRow.add(speedPanel);
+        topRow.add(Box.createHorizontalGlue());
+        topRow.add(loadDefaultsButton);
+        topRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, SettingsConstants.Ui.OPTIONS_TOP_ROW_MAX_HEIGHT));
+        return topRow;
+    }
+
+    private JPanel createButtonRow(JButton startButton) {
+        JPanel buttonRow = new JPanel();
+        buttonRow.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        buttonRow.setOpaque(false);
+        buttonRow.add(startButton);
+        return buttonRow;
+    }
+
+    private JButton createStartButton(ActionListener actionListener) {
+        JButton startButton = new JButton(SettingsConstants.Commands.START_GAME);
+        startButton.setPreferredSize(new Dimension(SettingsConstants.Ui.OPTIONS_START_BUTTON_WIDTH, SettingsConstants.Ui.OPTIONS_START_BUTTON_HEIGHT));
+        startButton.setMaximumSize(new Dimension(SettingsConstants.Ui.OPTIONS_START_BUTTON_WIDTH, SettingsConstants.Ui.OPTIONS_START_BUTTON_HEIGHT));
+        startButton.setFocusPainted(false);
+        startButton.setBackground(SettingsConstants.Ui.START_BUTTON_BACKGROUND);
+        startButton.setForeground(Color.WHITE);
+        startButton.setFont(startButton.getFont().deriveFont(Font.BOLD));
+        startButton.addActionListener(actionListener);
+        return startButton;
+    }
+
     void setSpeedToDefault() {
-        speedSpinner.setValue(3);
+        speedSpinner.setValue(SettingsConstants.Speed.DEFAULT);
     }
 }

@@ -16,11 +16,12 @@ import java.util.List;
  */
 public class GameRenderer {
 
-    private static final String SCORE_FONT_FAMILY = "SANS_SERIF";
+    private final Font scoreFont = new Font(Font.SANS_SERIF, Font.BOLD, UiSettings.SCORE_FONT_SIZE);
+    private final Font finalTitleFont = new Font(Font.SANS_SERIF, Font.BOLD, UiSettings.FINAL_TITLE_FONT_SIZE);
+    private final Font finalRowFont = new Font(Font.SANS_SERIF, Font.BOLD, UiSettings.FINAL_ROW_FONT_SIZE);
 
-    public void drawGame(Graphics g, Image gameFieldImage, List<Player> players, GameState state, Runnable handleRoundTransition) {
+    public void drawGame(Graphics g, Image gameFieldImage, List<Player> players, GameState state) {
         g.drawImage(gameFieldImage, 0, 0, null);
-        handleRoundTransition.run();
         switch (state) {
             case GAME_OVER -> drawFinalStatistics(g, players);
             case STARTED -> drawStartScreen(g, players);
@@ -79,7 +80,7 @@ public class GameRenderer {
         g.setColor(RenderSettings.FINAL_SCREEN_BACKGROUND);
         g.fillRect(0, 0, DisplaySettings.WINDOW_WIDTH, DisplaySettings.WINDOW_HEIGHT);
         g.setColor(RenderSettings.FINAL_SCREEN_TEXT);
-        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, UiSettings.FINAL_TITLE_FONT_SIZE));
+        g.setFont(finalTitleFont);
         g.drawString(UiSettings.FINAL_SCORES_TITLE, UiSettings.FINAL_TITLE_X, UiSettings.FINAL_TITLE_Y);
 
         for (int i = 0; i < players.size(); i++) {
@@ -89,7 +90,7 @@ public class GameRenderer {
 
     private void drawScoreRow(Graphics g, Player player, int rowIndex) {
         g.setColor(player.getColor());
-        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, UiSettings.SCORE_FONT_SIZE));
+        g.setFont(scoreFont);
         g.drawString(
             player.getPlayerName(),
             UiSettings.SCORE_NAME_X,
@@ -104,7 +105,7 @@ public class GameRenderer {
 
     private void drawFinalScoreRow(Graphics g, Player player, int rowIndex) {
         g.setColor(player.getColor());
-        g.setFont(new Font(SCORE_FONT_FAMILY, Font.BOLD, UiSettings.FINAL_ROW_FONT_SIZE));
+        g.setFont(finalRowFont);
         g.drawString(
             player.getPlayerName(),
             UiSettings.FINAL_ROW_NAME_X,

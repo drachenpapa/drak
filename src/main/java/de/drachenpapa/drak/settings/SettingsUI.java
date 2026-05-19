@@ -31,6 +31,7 @@ public class SettingsUI extends JFrame implements ActionListener {
     private final OptionsControlPanel optionsControlPanel;
     private final PlayerSettingsPanel[] playerPanels;
     private final transient SettingsPresenter presenter;
+    private final JCheckBox allCheckBox;
 
     public SettingsUI() {
         this(new SettingsPresenter());
@@ -51,7 +52,7 @@ public class SettingsUI extends JFrame implements ActionListener {
         playerPanels = new PlayerSettingsPanel[SettingsConstants.Players.MAX_PLAYERS];
         initializePlayerPanels(mainPanel);
 
-        PlayerSettingsPanel.addAllSelector(mainPanel, playerPanels);
+        allCheckBox = PlayerSettingsPanel.addAllSelector(mainPanel, playerPanels);
 
         optionsControlPanel = new OptionsControlPanel(
             SettingsConstants.Speed.DEFAULT,
@@ -113,21 +114,30 @@ public class SettingsUI extends JFrame implements ActionListener {
     }
 
     private void bindPlayerPanelActions() {
-        for (int i = 0; i < SettingsConstants.Players.MAX_PLAYERS; i++) {
-            playerPanels[i].checkBox.addActionListener(this);
-            playerPanels[i].colorButton.addActionListener(this);
-            playerPanels[i].leftKeyButton.addActionListener(this);
-            playerPanels[i].rightKeyButton.addActionListener(this);
+        for (PlayerSettingsPanel panel : playerPanels) {
+            panel.checkBox.addActionListener(this);
+            panel.colorButton.addActionListener(this);
+            panel.leftKeyButton.addActionListener(this);
+            panel.rightKeyButton.addActionListener(this);
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (SettingsConstants.Commands.START_GAME.equals(e.getActionCommand())) {
-            int speedLevel = optionsControlPanel.getSpeed();
-            GameEngine gameEngine = presenter.startGame(playerPanels, speedLevel);
-            gameEngine.startGame();
-        } else if (SettingsConstants.Commands.LOAD_DEFAULTS.equals(e.getActionCommand())) {
+        if (SettingsConstants.Command.START_GAME.label.equals(e.getActionCommand())) {
+            try {
+                int speedLevel = optionsControlPanel.getSpeed();
+                GameEngine gameEngine = presenter.startGame(playerPanels, speedLevel);
+                gameEngine.startGame();
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    ex.getMessage(),
+                    SettingsConstants.Text.INVALID_CONFIGURATION_TITLE,
+                    JOptionPane.WARNING_MESSAGE
+                );
+            }
+        } else if (SettingsConstants.Command.LOAD_DEFAULTS.label.equals(e.getActionCommand())) {
             loadDefaultPlayerSettings();
         } else {
             handlePlayerActions(e);
@@ -150,8 +160,8 @@ public class SettingsUI extends JFrame implements ActionListener {
             playerPanels[i].enableRow();
         }
 
-        PlayerSettingsPanel.allCheckBox.setSelected(false);
-        PlayerSettingsPanel.allCheckBox.setEnabled(true);
+        allCheckBox.setSelected(false);
+        allCheckBox.setEnabled(true);
 
         optionsControlPanel.setSpeedToDefault();
     }

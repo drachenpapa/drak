@@ -10,6 +10,17 @@ final class SettingsConstants {
     private SettingsConstants() {
     }
 
+    enum Command {
+        START_GAME("Start Game"),
+        LOAD_DEFAULTS("Load Defaults");
+
+        final String label;
+
+        Command(String label) {
+            this.label = label;
+        }
+    }
+
     static final class Players {
         static final int MAX_PLAYERS = 6;
         static final int DEFAULT_ACTIVE_PLAYERS = 2;
@@ -47,14 +58,6 @@ final class SettingsConstants {
         static final int MAX = 5;
 
         private Speed() {
-        }
-    }
-
-    static final class Commands {
-        static final String START_GAME = "Start Game";
-        static final String LOAD_DEFAULTS = "Load Defaults";
-
-        private Commands() {
         }
     }
 
@@ -101,6 +104,7 @@ final class SettingsConstants {
         static final String ENTER_RIGHT_KEY = "Enter new right control key for ";
         static final String INVALID_CONTROL_KEY_TITLE = "Invalid Control Key";
         static final String INVALID_CONTROL_KEY_MESSAGE = "Please enter exactly one non-whitespace character.";
+        static final String INVALID_CONFIGURATION_TITLE = "Invalid Configuration";
         static final String SPEED_LEVEL_LABEL = "Speed Level:";
         static final String ALL_LABEL = "All";
         static final String COLOR_BUTTON = "Color";

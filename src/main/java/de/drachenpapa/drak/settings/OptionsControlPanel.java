@@ -54,7 +54,7 @@ class OptionsControlPanel extends JPanel {
     }
 
     private JButton createLoadDefaultsButton(ActionListener actionListener) {
-        JButton loadDefaultsButton = new JButton(SettingsConstants.Commands.LOAD_DEFAULTS);
+        JButton loadDefaultsButton = new JButton(SettingsConstants.Command.LOAD_DEFAULTS.label);
         loadDefaultsButton.setFocusPainted(false);
         loadDefaultsButton.setBackground(SettingsConstants.Ui.LOAD_DEFAULTS_BUTTON_BACKGROUND);
         loadDefaultsButton.addActionListener(actionListener);
@@ -81,7 +81,7 @@ class OptionsControlPanel extends JPanel {
     }
 
     private JButton createStartButton(ActionListener actionListener) {
-        JButton startButton = new JButton(SettingsConstants.Commands.START_GAME);
+        JButton startButton = new JButton(SettingsConstants.Command.START_GAME.label);
         startButton.setPreferredSize(new Dimension(SettingsConstants.Ui.OPTIONS_START_BUTTON_WIDTH, SettingsConstants.Ui.OPTIONS_START_BUTTON_HEIGHT));
         startButton.setMaximumSize(new Dimension(SettingsConstants.Ui.OPTIONS_START_BUTTON_WIDTH, SettingsConstants.Ui.OPTIONS_START_BUTTON_HEIGHT));
         startButton.setFocusPainted(false);

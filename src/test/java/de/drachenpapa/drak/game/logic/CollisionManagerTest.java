@@ -1,33 +1,24 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.TestReflectionUtils;
 import de.drachenpapa.drak.game.config.CollisionSettings;
 import de.drachenpapa.drak.game.config.DisplaySettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.Mockito.verify;
 
 @DisplayName("CollisionManager")
-@ExtendWith(MockitoExtension.class)
 class CollisionManagerTest {
 
-    @Mock
-    private PlayerManager playerManager;
-
     private List<Player> players;
-    private List<Point[]> curvePoints;
+    private PlayerManager playerManager;
     private CollisionManager collisionManager;
 
     @BeforeEach
@@ -37,8 +28,8 @@ class CollisionManagerTest {
             new Player("Player 2", Color.GREEN, 'y', 'x'));
         players.get(0).setAlive(true);
         players.get(1).setAlive(true);
-        curvePoints = new ArrayList<>();
-        collisionManager = new CollisionManager(players, curvePoints, playerManager);
+        playerManager = new PlayerManager(players);
+        collisionManager = new CollisionManager(playerManager);
     }
 
     @Nested
@@ -48,10 +39,14 @@ class CollisionManagerTest {
         @Test
         @DisplayName("marks player as dead and increases points for alive players")
         void marksPlayerDeadAndIncreasesPoints() {
+            int alivePlayerScoreBefore = players.get(1).getScore();
+
             collisionManager.handleCollision(0);
 
-            assertThat(players.getFirst().isAlive()).isFalse();
-            verify(playerManager).increasePointsForAlivePlayers();
+            assertAll(
+                () -> assertThat(players.getFirst().isAlive()).isFalse(),
+                () -> assertThat(players.get(1).getScore()).isEqualTo(alivePlayerScoreBefore + 1)
+            );
         }
     }
 
@@ -64,7 +59,7 @@ class CollisionManagerTest {
         void wrapsPositionAndReturnsFalseOnBoundaryExit() {
             Curve curve = new Curve(700, 10, 0, 1000);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertAll(
                 () -> assertThat(collision).isFalse(),
@@ -78,7 +73,7 @@ class CollisionManagerTest {
         void wrapsExactlyAtRightAndBottomBoundaries() {
             Curve curve = new Curve(DisplaySettings.PLAY_AREA_WIDTH, DisplaySettings.PLAY_AREA_HEIGHT, 0, 1000);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertAll(
                 () -> assertThat(collision).isFalse(),
@@ -94,7 +89,7 @@ class CollisionManagerTest {
         void doesNotWrapAtExactZeroCoordinates() {
             Curve curve = new Curve(0, 0, 0, 1000);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertAll(
                 () -> assertThat(collision).isFalse(),
@@ -108,7 +103,7 @@ class CollisionManagerTest {
         void wrapsXPositionFromLeftOutOfBounds() {
             Curve curve = new Curve(-1, 10, 0, 1000);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertAll(
                 () -> assertThat(collision).isFalse(),
@@ -123,8 +118,8 @@ class CollisionManagerTest {
             Curve bottomExit = new Curve(10, DisplaySettings.PLAY_AREA_HEIGHT, 0, 1000);
             Curve topExit = new Curve(10, -1, 0, 1000);
 
-            boolean bottomCollision = collisionManager.isCollisionDetected(bottomExit);
-            boolean topCollision = collisionManager.isCollisionDetected(topExit);
+            boolean bottomCollision = collisionManager.isCollisionDetected(bottomExit, 0);
+            boolean topCollision = collisionManager.isCollisionDetected(topExit, 0);
 
             assertAll(
                 () -> assertThat(bottomCollision).isFalse(),
@@ -145,7 +140,7 @@ class CollisionManagerTest {
                 curve.addPoint(10, 10);
             }
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertThat(collision).isTrue();
         }
@@ -162,18 +157,18 @@ class CollisionManagerTest {
             curve.setXPosition(100);
             curve.setYPosition(100);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertThat(collision).isFalse();
         }
 
         @Test
-        @DisplayName("returns true when hitting another curve")
+        @DisplayName("returns true when hitting another curve (via occupied grid)")
         void returnsTrueOnOtherCurveCollision() {
             Curve curve = new Curve(20, 20, 0, 1000);
-            curvePoints.add(new Point[]{new Point(20, 20)});
+            playerManager.markTrailOwner(20, 20, 2);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertThat(collision).isTrue();
         }
@@ -182,9 +177,9 @@ class CollisionManagerTest {
         @DisplayName("returns false for near miss outside collision radius")
         void returnsFalseForNearMissOutsideCollisionRadius() {
             Curve curve = new Curve(20, 20, 0, 1000);
-            curvePoints.add(new Point[]{new Point(23, 23)});
+            playerManager.markTrailOwner(23, 23, 2);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertThat(collision).isFalse();
         }
@@ -193,11 +188,49 @@ class CollisionManagerTest {
         @DisplayName("returns false at exact collision radius boundary")
         void returnsFalseAtExactCollisionRadiusBoundary() {
             Curve curve = new Curve(20, 20, 0, 1000);
-            curvePoints.add(new Point[]{new Point(23, 20)});
+            playerManager.markTrailOwner(23, 20, 2);
 
-            boolean collision = collisionManager.isCollisionDetected(curve);
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
 
             assertThat(collision).isFalse();
+        }
+
+        @Test
+        @DisplayName("marks grid with player owner id after successful movement")
+        void marksGridWithPlayerOwnerIdAfterSuccessfulMovement() {
+            Curve curve = new Curve(50, 50, 0, 1000);
+            curve.setPreviousXPosition(50);
+            curve.setPreviousYPosition(50);
+            curve.setXPosition(51);
+            curve.setYPosition(50);
+
+            boolean collision = collisionManager.isCollisionDetected(curve, 0);
+
+            assertAll(
+                () -> assertThat(collision).isFalse(),
+                () -> assertThat(playerManager.getTrailOwner(50, 50)).isEqualTo(1),
+                () -> assertThat(playerManager.getTrailOwner(51, 50)).isEqualTo(1)
+            );
+        }
+
+        @Test
+        @DisplayName("ignores own owner id when checking other-trail collisions")
+        void ignoresOwnOwnerIdWhenCheckingOtherTrailCollision() {
+            playerManager.markTrailOwner(100, 100, 1);
+
+            Boolean collision = TestReflectionUtils.invokeMethod(collisionManager, "isOtherTrailCollision", 100, 100, 0);
+
+            assertThat(collision).isFalse();
+        }
+
+        @Test
+        @DisplayName("markPointsInGrid skips out-of-bounds points")
+        void markPointsInGridSkipsOutOfBoundsPoints() {
+            Point[] points = {new Point(-1, 0), new Point(10, 10)};
+
+            TestReflectionUtils.invokeMethod(collisionManager, "markPointsInGrid", points, 0);
+
+            assertThat(playerManager.getTrailOwner(10, 10)).isEqualTo(1);
         }
     }
 
@@ -208,7 +241,7 @@ class CollisionManagerTest {
         @Test
         @DisplayName("buildSegmentPoints interpolates inclusive endpoints when within step threshold")
         void buildSegmentPointsInterpolatesInclusiveEndpointsWithinThreshold() {
-            Point[] points = ReflectionTestUtils.invokeMethod(collisionManager, "buildSegmentPoints", 0, 0, 3, 0);
+            Point[] points = TestReflectionUtils.invokeMethod(collisionManager, "buildSegmentPoints", 0, 0, 3, 0);
 
             assertThat(points)
                 .hasSize(4)
@@ -220,7 +253,7 @@ class CollisionManagerTest {
         void buildSegmentPointsReturnsEndpointOnlyAboveThreshold() {
             int targetX = CollisionSettings.MAX_INTERPOLATION_STEPS_PER_TICK + 1;
 
-            Point[] points = ReflectionTestUtils.invokeMethod(collisionManager, "buildSegmentPoints", 0, 0, targetX, 0);
+            Point[] points = TestReflectionUtils.invokeMethod(collisionManager, "buildSegmentPoints", 0, 0, targetX, 0);
 
             assertThat(points)
                 .hasSize(1)
@@ -228,9 +261,21 @@ class CollisionManagerTest {
         }
 
         @Test
+        @DisplayName("buildSegmentPoints interpolates when movement equals interpolation threshold")
+        void buildSegmentPointsInterpolatesAtExactThreshold() {
+            int targetX = CollisionSettings.MAX_INTERPOLATION_STEPS_PER_TICK;
+
+            Point[] points = TestReflectionUtils.invokeMethod(collisionManager, "buildSegmentPoints", 0, 0, targetX, 0);
+
+            assertThat(points)
+                .hasSize(targetX + 1)
+                .contains(new Point(0, 0), new Point(targetX, 0));
+        }
+
+        @Test
         @DisplayName("buildSegmentPoints returns endpoint only for zero movement")
         void buildSegmentPointsReturnsEndpointForZeroMovement() {
-            Point[] points = ReflectionTestUtils.invokeMethod(collisionManager, "buildSegmentPoints", 10, 20, 10, 20);
+            Point[] points = TestReflectionUtils.invokeMethod(collisionManager, "buildSegmentPoints", 10, 20, 10, 20);
 
             assertThat(points)
                 .hasSize(1)
@@ -240,9 +285,9 @@ class CollisionManagerTest {
         @Test
         @DisplayName("isOutOfBounds is true at upper boundaries and false at last in-bounds coordinate")
         void isOutOfBoundsHandlesUpperBoundaryExactly() {
-            Boolean outAtWidth = ReflectionTestUtils.invokeMethod(collisionManager, "isOutOfBounds", DisplaySettings.PLAY_AREA_WIDTH, 10);
-            Boolean outAtHeight = ReflectionTestUtils.invokeMethod(collisionManager, "isOutOfBounds", 10, DisplaySettings.PLAY_AREA_HEIGHT);
-            Boolean inBounds = ReflectionTestUtils.invokeMethod(collisionManager, "isOutOfBounds", DisplaySettings.PLAY_AREA_WIDTH - 1, DisplaySettings.PLAY_AREA_HEIGHT - 1);
+            Boolean outAtWidth = TestReflectionUtils.invokeMethod(collisionManager, "isOutOfBounds", DisplaySettings.PLAY_AREA_WIDTH, 10);
+            Boolean outAtHeight = TestReflectionUtils.invokeMethod(collisionManager, "isOutOfBounds", 10, DisplaySettings.PLAY_AREA_HEIGHT);
+            Boolean inBounds = TestReflectionUtils.invokeMethod(collisionManager, "isOutOfBounds", DisplaySettings.PLAY_AREA_WIDTH - 1, DisplaySettings.PLAY_AREA_HEIGHT - 1);
 
             assertAll(
                 () -> assertThat(outAtWidth).isTrue(),
@@ -256,13 +301,37 @@ class CollisionManagerTest {
         void isPointCollisionRespectsDistanceBoundary() {
             Point center = new Point(0, 0);
 
-            Boolean inside = ReflectionTestUtils.invokeMethod(collisionManager, "isPointCollision", center, 2, 2);
-            Boolean atBoundary = ReflectionTestUtils.invokeMethod(collisionManager, "isPointCollision", center, CollisionSettings.CURVE_WIDTH, 0);
+            Boolean inside = TestReflectionUtils.invokeMethod(collisionManager, "isPointCollision", center, 2, 2);
+            Boolean atBoundary = TestReflectionUtils.invokeMethod(collisionManager, "isPointCollision", center, CollisionSettings.CURVE_WIDTH, 0);
 
             assertAll(
                 () -> assertThat(inside).isTrue(),
                 () -> assertThat(atBoundary).isFalse()
             );
+        }
+
+        @Test
+        @DisplayName("isOtherTrailCollision detects collision on capped maxX boundary")
+        void isOtherTrailCollisionDetectsCollisionOnCappedMaxXBoundary() {
+            int x = DisplaySettings.PLAY_AREA_WIDTH - 2;
+            int y = 20;
+            playerManager.markTrailOwner(DisplaySettings.PLAY_AREA_WIDTH - 1, y, 2);
+
+            Boolean collision = TestReflectionUtils.invokeMethod(collisionManager, "isOtherTrailCollision", x, y, 0);
+
+            assertThat(collision).isTrue();
+        }
+
+        @Test
+        @DisplayName("isOtherTrailCollision detects collision on capped maxY boundary")
+        void isOtherTrailCollisionDetectsCollisionOnCappedMaxYBoundary() {
+            int x = 20;
+            int y = DisplaySettings.PLAY_AREA_HEIGHT - 2;
+            playerManager.markTrailOwner(x, DisplaySettings.PLAY_AREA_HEIGHT - 1, 2);
+
+            Boolean collision = TestReflectionUtils.invokeMethod(collisionManager, "isOtherTrailCollision", x, y, 0);
+
+            assertThat(collision).isTrue();
         }
     }
 }

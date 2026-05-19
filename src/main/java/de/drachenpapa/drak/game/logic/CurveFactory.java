@@ -18,10 +18,12 @@ final class CurveFactory {
 
     static Curve createRandomCurve(RandomGenerator randomGenerator) {
         RandomGenerator rng = Objects.requireNonNull(randomGenerator, "randomGenerator");
-        int xPosition = rng.nextInt(DisplaySettings.WINDOW_WIDTH) + CurveSpawnSettings.SPAWN_POSITION_OFFSET;
-        int yPosition = rng.nextInt(DisplaySettings.WINDOW_HEIGHT) + CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+        int safeWidth = DisplaySettings.PLAY_AREA_WIDTH - 2 * CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+        int safeHeight = DisplaySettings.PLAY_AREA_HEIGHT - 2 * CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+        int xPosition = rng.nextInt(safeWidth) + CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+        int yPosition = rng.nextInt(safeHeight) + CurveSpawnSettings.SPAWN_POSITION_OFFSET;
         double direction = rng.nextDouble(CurvePhysicsSettings.ANGLE_FULL_CIRCLE);
-        int gapInterval = rng.nextInt(CurveSpawnSettings.MIN_INITIAL_GAP_INTERVAL, CurveSpawnSettings.MAX_INITIAL_GAP_INTERVAL + 1);
+        long gapInterval = rng.nextLong(CurveSpawnSettings.MIN_INITIAL_GAP_INTERVAL_MS, CurveSpawnSettings.MAX_INITIAL_GAP_INTERVAL_MS + 1);
         return new Curve(xPosition, yPosition, direction, gapInterval, rng);
     }
 }

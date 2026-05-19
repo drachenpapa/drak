@@ -38,6 +38,16 @@ class PlayerConfigTest {
         }
 
         @Test
+        @DisplayName("rejects player names longer than max length")
+        void rejectsTooLongPlayerName() {
+            String tooLongName = "x".repeat(PlayerConfig.MAX_PLAYER_NAME_LENGTH + 1);
+
+            assertThatThrownBy(() -> new PlayerConfig(tooLongName, Color.RED, 'a', 'd'))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must not exceed");
+        }
+
+        @Test
         @DisplayName("rejects null color")
         void rejectsNullColor() {
             assertThatThrownBy(() -> new PlayerConfig("Player 1", null, 'a', 'd'))

@@ -54,7 +54,7 @@ class PlayerManagerTest {
             players.get(1).setCurve(new Curve(2, 2, 0, 1));
             Curve firstBefore = players.get(0).getCurve();
             Curve secondBefore = players.get(1).getCurve();
-            playerManager.getCurvePoints().add(new Point[]{new Point(10, 10)});
+            playerManager.getOccupiedGrid()[10][10] = 1;
 
             playerManager.resetForNextRound();
 
@@ -69,8 +69,8 @@ class PlayerManagerTest {
                     .isNotSameAs(firstBefore),
                 () -> assertThat(players.get(1).getCurve())
                     .isNotSameAs(secondBefore),
-                () -> assertThat(playerManager.getCurvePoints())
-                    .isEmpty()
+                () -> assertThat(playerManager.getOccupiedGrid()[10][10])
+                    .isZero()
             );
         }
     }

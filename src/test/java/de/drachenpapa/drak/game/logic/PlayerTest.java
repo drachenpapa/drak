@@ -1,12 +1,13 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.TestReflectionUtils;
 import de.drachenpapa.drak.game.config.CurvePhysicsSettings;
+import de.drachenpapa.drak.game.config.CurveSpawnSettings;
 import de.drachenpapa.drak.game.config.DisplaySettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.awt.*;
 import java.util.random.RandomGenerator;
@@ -50,20 +51,25 @@ class PlayerTest {
         @Test
         @DisplayName("uses injected random generator for initial curve")
         void usesInjectedRandomGeneratorForInitialCurve() {
+            int safeWidth = DisplaySettings.PLAY_AREA_WIDTH - 2 * CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+            int safeHeight = DisplaySettings.PLAY_AREA_HEIGHT - 2 * CurveSpawnSettings.SPAWN_POSITION_OFFSET;
+            long gapIntervalStub = CurveSpawnSettings.MIN_INITIAL_GAP_INTERVAL_MS;
+
             RandomGenerator rng = mock(RandomGenerator.class);
-            when(rng.nextInt(DisplaySettings.WINDOW_WIDTH)).thenReturn(10);
-            when(rng.nextInt(DisplaySettings.WINDOW_HEIGHT)).thenReturn(20);
+            when(rng.nextInt(safeWidth)).thenReturn(10);
+            when(rng.nextInt(safeHeight)).thenReturn(20);
             when(rng.nextDouble(CurvePhysicsSettings.ANGLE_FULL_CIRCLE)).thenReturn(90.0);
-            when(rng.nextInt(1, 11)).thenReturn(7);
+            when(rng.nextLong(CurveSpawnSettings.MIN_INITIAL_GAP_INTERVAL_MS,
+                CurveSpawnSettings.MAX_INITIAL_GAP_INTERVAL_MS + 1)).thenReturn(gapIntervalStub);
 
             Player deterministicPlayer = new Player("P", Color.BLUE, 'a', 'd', rng);
             Curve curve = deterministicPlayer.getCurve();
 
-            assertThat(curve.getXPosition()).isEqualTo(110);
-            assertThat(curve.getYPosition()).isEqualTo(120);
+            assertThat(curve.getXPosition()).isEqualTo(10 + CurveSpawnSettings.SPAWN_POSITION_OFFSET);
+            assertThat(curve.getYPosition()).isEqualTo(20 + CurveSpawnSettings.SPAWN_POSITION_OFFSET);
             assertThat(curve.getDirectionAngle()).isEqualTo(90.0);
-            assertThat(curve.getGapInterval()).isEqualTo(7);
-            assertThat(ReflectionTestUtils.getField(curve, "randomGenerator")).isSameAs(rng);
+            assertThat(curve.getGapInterval()).isEqualTo(gapIntervalStub);
+            assertThat(TestReflectionUtils.getField(curve, "randomGenerator")).isSameAs(rng);
         }
     }
 

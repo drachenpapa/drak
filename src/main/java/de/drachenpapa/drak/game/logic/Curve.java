@@ -81,12 +81,14 @@ public class Curve {
         directionAngle = (directionAngle - CurvePhysicsSettings.TURN_ANGLE_DEGREES + CurvePhysicsSettings.ANGLE_FULL_CIRCLE) % CurvePhysicsSettings.ANGLE_FULL_CIRCLE;
     }
 
-    boolean isGeneratingGap() {
+    void tickGap() {
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastGapTimestamp > gapInterval) {
             startNewGap(currentTime);
         }
-        return isGapActive && continueGap();
+        if (isGapActive) {
+            continueGap();
+        }
     }
 
     private void startNewGap(long currentTime) {
@@ -102,13 +104,11 @@ public class Curve {
         );
     }
 
-    private boolean continueGap() {
+    private void continueGap() {
         if (gapLengthCounter > 0) {
             gapLengthCounter--;
-            return true;
         } else {
             isGapActive = false;
-            return false;
         }
     }
 }

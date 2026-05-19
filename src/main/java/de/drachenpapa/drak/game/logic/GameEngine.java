@@ -46,28 +46,26 @@ public class GameEngine {
         this.gameRenderer = setup.gameRenderer();
         this.gameSpeed = setup.gameSpeed();
         this.gameFieldImage = setup.gameFieldImage();
-        this.gamePanel = new GamePanel(gameRenderer, playerManager, gameStateManager, this, gameFieldImage);
+        this.gamePanel = new GamePanel(gameRenderer, playerManager, gameStateManager, gameFieldImage);
         this.gameWindow = windowFactory.create(gamePanel, this);
     }
 
-    GameEngine(List<Player> players, int speed, GameWindowFactory windowFactory) {
-        this(new GameConfig(speed, toPlayerConfigs(players)), windowFactory);
-    }
-
-    private static List<PlayerConfig> toPlayerConfigs(List<Player> players) {
-        return players.stream()
-            .map(player -> new PlayerConfig(player.getPlayerName(), player.getColor(), player.getLeftKey(), player.getRightKey()))
-            .toList();
-    }
 
     public void startGame() {
         gameStateManager.setGameState(GameState.RUNNING);
         stopGameTimer();
         gameTimer = new Timer(gameSpeed, e -> {
-            GameState state = gameStateManager.getGameState();
-            if (state == GameState.RUNNING || state == GameState.GAME_OVER) {
-                updateGameState();
-                gamePanel.repaint();
+            switch (gameStateManager.getGameState()) {
+                case RUNNING -> {
+                    updateGameState();
+                    gamePanel.repaint();
+                }
+                case READY_FOR_NEXT_ROUND -> {
+                    handleRoundTransition();
+                    gamePanel.repaint();
+                }
+                case GAME_OVER -> gamePanel.repaint();
+                default -> { /* STARTED, PAUSED – no action */ }
             }
         });
         gameTimer.start();
@@ -100,8 +98,17 @@ public class GameEngine {
         if (gameStateManager.getGameState() == GameState.GAME_OVER) {
             return;
         }
+        tickPlayerGaps();
         updateCurvesAndDraw();
         updatePlayerMovements();
+    }
+
+    private void tickPlayerGaps() {
+        for (Player player : playerManager.getPlayers()) {
+            if (player.isAlive()) {
+                player.getCurve().tickGap();
+            }
+        }
     }
 
     private void updateCurvesAndDraw() {
@@ -113,8 +120,8 @@ public class GameEngine {
                 Player player = players.get(i);
                 Curve curve = player.getCurve();
 
-                if (player.isAlive() && !curve.isGeneratingGap()) {
-                    if (collisionManager.isCollisionDetected(curve)) {
+                if (player.isAlive() && !curve.isGapActive()) {
+                    if (collisionManager.isCollisionDetected(curve, i)) {
                         handleCollision(g2, i);
                     } else {
                         gameRenderer.drawPlayerCurve(g2, curve, player.getColor());
@@ -171,7 +178,7 @@ public class GameEngine {
         private static EngineSetup from(GameConfig config) {
             List<Player> players = config.createPlayers();
             PlayerManager playerManager = new PlayerManager(players);
-            CollisionManager collisionManager = new CollisionManager(playerManager.getPlayers(), playerManager.getCurvePoints(), playerManager);
+            CollisionManager collisionManager = new CollisionManager(playerManager);
             GameStateManager gameStateManager = new GameStateManager(playerManager, calculateWinningScore(players.size()));
             GameRenderer gameRenderer = new GameRenderer();
             int gameSpeed = calculateGameSpeed(config.speed());

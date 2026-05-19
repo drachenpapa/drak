@@ -20,8 +20,9 @@
     <mockito.version>5.23.0</mockito.version>
     <byte-buddy.version>1.17.7</byte-buddy.version>
     <assertj.version>3.27.7</assertj.version>
-    <spring-test.version>7.0.7</spring-test.version>
     <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>
+    <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
     <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
     <pitest-maven.version>1.19.4</pitest-maven.version>
     <pitest-junit5-plugin.version>1.2.2</pitest-junit5-plugin.version>
@@ -68,12 +69,6 @@
       <version>${assertj.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-test</artifactId>
-      <version>${spring-test.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
 
   <developers>
@@ -96,7 +91,52 @@
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</argLine>
+          <excludes>
+            <exclude>**/*IT.java</exclude>
+            <exclude>**/*ITCase.java</exclude>
+            <exclude>**/*IntegrationTest.java</exclude>
+          </excludes>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>${build-helper-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>add-integration-test-source</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>add-test-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>src/integration-test/java</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven-failsafe-plugin.version}</version>
+        <configuration>
+          <argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</argLine>
+          <includes>
+            <include>**/*IT.java</include>
+            <include>**/*ITCase.java</include>
+            <include>**/*IntegrationTest.java</include>
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

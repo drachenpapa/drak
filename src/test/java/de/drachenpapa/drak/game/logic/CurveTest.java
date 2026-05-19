@@ -1,11 +1,11 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.TestReflectionUtils;
 import de.drachenpapa.drak.game.config.CurvePhysicsSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.awt.*;
 
@@ -155,17 +155,19 @@ class CurveTest {
         @DisplayName("activates after interval elapsed and deactivates afterwards")
         void activatesAndDeactivates() {
             Curve gapCurve = new Curve(0, 0, 90, 10);
-            ReflectionTestUtils.setField(gapCurve, "lastGapTimestamp", System.currentTimeMillis() - 20);
+            TestReflectionUtils.setField(gapCurve, "lastGapTimestamp", System.currentTimeMillis() - 20);
 
-            assertThat(gapCurve.isGeneratingGap())
+            gapCurve.tickGap();
+            assertThat(gapCurve.isGapActive())
                 .as("Gap should be active after interval elapsed")
                 .isTrue();
 
             int count = 0;
-            while (gapCurve.isGeneratingGap() && count < 10) {
+            while (gapCurve.isGapActive() && count < 10) {
+                gapCurve.tickGap();
                 count++;
             }
-            assertThat(gapCurve.isGeneratingGap())
+            assertThat(gapCurve.isGapActive())
                 .as("Gap should end after some time")
                 .isFalse();
         }
@@ -173,15 +175,17 @@ class CurveTest {
         @Test
         @DisplayName("continueGap decrements positive counter and then deactivates at zero")
         void continueGapTransitionsFromActiveToInactive() {
-            ReflectionTestUtils.setField(curve, "isGapActive", true);
-            ReflectionTestUtils.setField(curve, "gapLengthCounter", 1);
+            TestReflectionUtils.setField(curve, "isGapActive", true);
+            TestReflectionUtils.setField(curve, "gapLengthCounter", 1);
+            TestReflectionUtils.setField(curve, "lastGapTimestamp", System.currentTimeMillis());
+            TestReflectionUtils.setField(curve, "gapInterval", Long.MAX_VALUE);
 
-            Boolean firstTick = ReflectionTestUtils.invokeMethod(curve, "continueGap");
-            Boolean secondTick = ReflectionTestUtils.invokeMethod(curve, "continueGap");
+            curve.tickGap();
+            boolean activeAfterFirstTick = curve.isGapActive();
+            curve.tickGap();
 
             assertAll(
-                () -> assertThat(firstTick).isTrue(),
-                () -> assertThat(secondTick).isFalse(),
+                () -> assertThat(activeAfterFirstTick).isTrue(),
                 () -> assertThat(curve.isGapActive()).isFalse()
             );
         }

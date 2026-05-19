@@ -2,7 +2,6 @@ package de.drachenpapa.drak.game.view;
 
 import de.drachenpapa.drak.game.config.DisplaySettings;
 import de.drachenpapa.drak.game.config.RenderSettings;
-import de.drachenpapa.drak.game.logic.GameEngine;
 import de.drachenpapa.drak.game.logic.GameStateManager;
 import de.drachenpapa.drak.game.logic.PlayerManager;
 
@@ -18,14 +17,12 @@ public class GamePanel extends JPanel {
     private final transient GameRenderer gameRenderer;
     private final transient PlayerManager playerManager;
     private final transient GameStateManager gameStateManager;
-    private final transient GameEngine gameEngine;
     private final transient Image gameFieldImage;
 
-    public GamePanel(GameRenderer gameRenderer, PlayerManager playerManager, GameStateManager gameStateManager, GameEngine gameEngine, Image gameFieldImage) {
+    public GamePanel(GameRenderer gameRenderer, PlayerManager playerManager, GameStateManager gameStateManager, Image gameFieldImage) {
         this.gameRenderer = gameRenderer;
         this.playerManager = playerManager;
         this.gameStateManager = gameStateManager;
-        this.gameEngine = gameEngine;
         this.gameFieldImage = gameFieldImage;
         setPreferredSize(new Dimension(DisplaySettings.WINDOW_WIDTH, DisplaySettings.WINDOW_HEIGHT));
         setBackground(RenderSettings.GAME_FIELD_BACKGROUND);
@@ -38,8 +35,7 @@ public class GamePanel extends JPanel {
             g,
             gameFieldImage,
             playerManager.getPlayers(),
-            gameStateManager.getGameState(),
-            gameEngine::handleRoundTransition
+            gameStateManager.getGameState()
         );
     }
 }

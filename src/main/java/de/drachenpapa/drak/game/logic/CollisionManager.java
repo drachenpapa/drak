@@ -4,33 +4,29 @@ import de.drachenpapa.drak.game.config.CollisionSettings;
 import de.drachenpapa.drak.game.config.DisplaySettings;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * Handles collision detection and collision-related actions for all players.
- * Checks for self-collisions, collisions with other curves, and manages collision consequences.
+ * Uses an occupancy grid (O(1) lookup) for cross-curve collision detection,
+ * and the per-curve point list for recent self-collision skip logic.
  */
 class CollisionManager {
 
-    private final List<Player> players;
-    private final List<Point[]> curvePoints;
     private final PlayerManager playerManager;
 
-    CollisionManager(List<Player> players, List<Point[]> curvePoints, PlayerManager playerManager) {
-        this.players = players;
-        this.curvePoints = curvePoints;
+    CollisionManager(PlayerManager playerManager) {
         this.playerManager = playerManager;
     }
 
     void handleCollision(int playerIndex) {
-        players.get(playerIndex).setAlive(false);
+        playerManager.getPlayers().get(playerIndex).setAlive(false);
         playerManager.increasePointsForAlivePlayers();
     }
 
-    boolean isCollisionDetected(Curve curve) {
+    boolean isCollisionDetected(Curve curve, int playerIndex) {
         wrapCurveIfNeeded(curve);
-        return detectCurveCollision(curve);
+        return detectCurveCollision(curve, playerIndex);
     }
 
     private void wrapCurveIfNeeded(Curve curve) {
@@ -54,7 +50,7 @@ class CollisionManager {
         }
     }
 
-    private boolean detectCurveCollision(Curve curve) {
+    private boolean detectCurveCollision(Curve curve, int playerIndex) {
         Point[] movementPoints = buildSegmentPoints(
             curve.getPreviousXPosition(),
             curve.getPreviousYPosition(),
@@ -65,13 +61,22 @@ class CollisionManager {
         for (Point point : movementPoints) {
             int x = point.x;
             int y = point.y;
-            if (isOutOfBounds(x, y) || isSelfCollision(curve, x, y) || isOtherCurveCollision(x, y)) {
+            if (isOutOfBounds(x, y) || isSelfCollision(curve, x, y) || isOtherTrailCollision(x, y, playerIndex)) {
                 return true;
             }
         }
 
-        curvePoints.add(movementPoints);
+        markPointsInGrid(movementPoints, playerIndex);
         return false;
+    }
+
+    private void markPointsInGrid(Point[] points, int playerIndex) {
+        int ownerId = playerIndex + 1;
+        for (Point p : points) {
+            if (!isOutOfBounds(p.x, p.y)) {
+                playerManager.markTrailOwner(p.x, p.y, ownerId);
+            }
+        }
     }
 
     private Point[] buildSegmentPoints(int fromX, int fromY, int toX, int toY) {
@@ -111,10 +116,26 @@ class CollisionManager {
             .anyMatch(p -> isPointCollision(p, x, y));
     }
 
-    private boolean isOtherCurveCollision(int x, int y) {
-        return curvePoints.stream()
-            .flatMap(Arrays::stream)
-            .anyMatch(p -> isPointCollision(p, x, y));
+    private boolean isOtherTrailCollision(int x, int y, int playerIndex) {
+        int ownerToIgnore = playerIndex + 1;
+        int radius = CollisionSettings.CURVE_WIDTH;
+        int minX = Math.max(0, x - radius);
+        int maxX = Math.min(DisplaySettings.PLAY_AREA_WIDTH - 1, x + radius);
+        int minY = Math.max(0, y - radius);
+        int maxY = Math.min(DisplaySettings.PLAY_AREA_HEIGHT - 1, y + radius);
+
+        for (int px = minX; px <= maxX; px++) {
+            for (int py = minY; py <= maxY; py++) {
+                int ownerId = playerManager.getTrailOwner(px, py);
+                if (ownerId == 0 || ownerId == ownerToIgnore) {
+                    continue;
+                }
+                if (isPointCollision(new Point(px, py), x, y)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean isPointCollision(Point p, int x, int y) {

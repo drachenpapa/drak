@@ -1,12 +1,11 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.game.config.BalanceSettings;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.awt.*;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.random.RandomGenerator;
 
 /**
@@ -24,57 +23,62 @@ public class Player {
     private final char leftKey;
     @Getter
     private final char rightKey;
-    private final AtomicInteger score = new AtomicInteger(0);
-    private final AtomicReference<Curve> curve = new AtomicReference<>();
     private final RandomGenerator curveRandomGenerator;
     @Getter
+    private int score = 0;
+    @Getter
+    private Curve curve;
+    private final int tickIntervalMs;
     @Setter
-    private volatile boolean leftKeyPressed = false;
+    @Getter
+    private boolean leftKeyPressed = false;
     @Getter
     @Setter
-    private volatile boolean rightKeyPressed = false;
+    private boolean rightKeyPressed = false;
     @Getter
-    @Setter
-    private volatile boolean alive = true;
+    private boolean alive = true;
 
     public Player(String playerName, Color color, char leftKey, char rightKey) {
-        this(playerName, color, leftKey, rightKey, RandomGenerator.getDefault());
+        this(playerName, color, leftKey, rightKey, BalanceSettings.DEFAULT_TICK_INTERVAL_MS, RandomGenerator.getDefault());
     }
 
     Player(String playerName, Color color, char leftKey, char rightKey, RandomGenerator curveRandomGenerator) {
+        this(playerName, color, leftKey, rightKey, BalanceSettings.DEFAULT_TICK_INTERVAL_MS, curveRandomGenerator);
+    }
+
+    Player(String playerName, Color color, char leftKey, char rightKey, int tickIntervalMs, RandomGenerator curveRandomGenerator) {
         this.playerName = playerName;
         this.color = color;
         this.leftKey = leftKey;
         this.rightKey = rightKey;
+        this.tickIntervalMs = tickIntervalMs;
         this.curveRandomGenerator = Objects.requireNonNull(curveRandomGenerator, "curveRandomGenerator");
-        this.curve.set(createNewCurve());
+        this.curve = createNewCurve();
     }
+
 
     void increaseScore() {
-        score.incrementAndGet();
+        score++;
     }
 
-    public int getScore() {
-        return score.get();
+
+    void kill() {
+        this.alive = false;
     }
 
-    public void setScore(int score) {
-        this.score.set(score);
+    void revive() {
+        this.alive = true;
     }
 
-    public Curve getCurve() {
-        return curve.get();
-    }
-
-    public void setCurve(Curve curve) {
-        this.curve.set(Objects.requireNonNull(curve, "curve"));
+    void setCurve(Curve curve) {
+        this.curve = Objects.requireNonNull(curve, "curve");
     }
 
     void resetCurve() {
-        curve.set(createNewCurve());
+        curve = createNewCurve();
     }
 
     private Curve createNewCurve() {
-        return CurveFactory.createRandomCurve(curveRandomGenerator);
+        return CurveFactory.createRandomCurve(curveRandomGenerator, tickIntervalMs);
     }
 }

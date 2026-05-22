@@ -5,12 +5,16 @@ package de.drachenpapa.drak.settings;
  */
 public class ControlKeyInputValidator {
 
-    public boolean isInvalidKeyInput(String input) {
-        return input == null || input.length() != 1 || Character.isWhitespace(input.charAt(0));
+    public boolean isValidKeyInput(String input) {
+        if (input == null || input.length() != 1) {
+            return false;
+        }
+        char c = input.charAt(0);
+        return !Character.isWhitespace(c) && !Character.isISOControl(c);
     }
 
     public char toControlKey(String input) {
-        if (isInvalidKeyInput(input)) {
+        if (!isValidKeyInput(input)) {
             throw new IllegalArgumentException("Control key must be exactly one non-whitespace character.");
         }
         return input.charAt(0);

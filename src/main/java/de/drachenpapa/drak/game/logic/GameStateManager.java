@@ -1,7 +1,8 @@
 package de.drachenpapa.drak.game.logic;
 
 import lombok.Getter;
-import lombok.Setter;
+
+import javax.swing.*;
 
 /**
  * Manages the current game state and transitions.
@@ -13,9 +14,8 @@ public class GameStateManager {
 
     private final int winningScore;
     private final PlayerManager playerManager;
-    private javax.swing.Timer roundTransitionTimer;
+    private Timer roundTransitionTimer;
 
-    @Setter
     @Getter
     private GameState gameState = GameState.STARTED;
 
@@ -24,14 +24,17 @@ public class GameStateManager {
         this.winningScore = winningScore;
     }
 
+    void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
+
     void checkForGameEnd() {
-        for (Player player : playerManager.getPlayers()) {
-            if (player.getScore() >= winningScore) {
-                gameState = GameState.GAME_OVER;
-                return;
-            }
-        }
-        if (playerManager.getAlivePlayerCount() <= 1) {
+        boolean anyPlayerWon = playerManager.getPlayers().stream()
+            .anyMatch(player -> player.getScore() >= winningScore);
+
+        if (anyPlayerWon) {
+            gameState = GameState.GAME_OVER;
+        } else if (playerManager.getAlivePlayerCount() <= 1) {
             gameState = GameState.READY_FOR_NEXT_ROUND;
         }
     }
@@ -40,7 +43,7 @@ public class GameStateManager {
         if (gameState == GameState.READY_FOR_NEXT_ROUND) {
             gameState = GameState.PAUSED;
             stopTimers();
-            roundTransitionTimer = new javax.swing.Timer(ROUND_TRANSITION_DELAY_MS, e -> {
+            roundTransitionTimer = new Timer(ROUND_TRANSITION_DELAY_MS, e -> {
                 try {
                     resetRound.run();
                     gameState = GameState.RUNNING;

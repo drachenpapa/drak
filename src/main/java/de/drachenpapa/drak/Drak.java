@@ -10,8 +10,6 @@ import javax.swing.*;
  */
 public class Drak {
 
-    public static final String GAME_TITLE = "Drak";
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(SettingsUI::new);
     }

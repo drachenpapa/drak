@@ -7,12 +7,23 @@ import de.drachenpapa.drak.game.logic.PlayerManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serial;
 
 /**
  * Main panel for rendering the game field and UI elements.
  * Delegates all drawing operations to the GameRenderer.
+ *
+ * <p>Serialization is explicitly blocked: this panel holds transient game state
+ * and must not be serialized.
  */
 public class GamePanel extends JPanel {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private final transient GameRenderer gameRenderer;
     private final transient PlayerManager playerManager;
@@ -37,5 +48,15 @@ public class GamePanel extends JPanel {
             playerManager.getPlayers(),
             gameStateManager.getGameState()
         );
+    }
+
+    @Serial
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        throw new NotSerializableException(GamePanel.class.getName());
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream in) throws IOException {
+        throw new NotSerializableException(GamePanel.class.getName());
     }
 }

@@ -8,7 +8,9 @@ import de.drachenpapa.drak.game.logic.GameState;
 import de.drachenpapa.drak.game.logic.Player;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Responsible for all rendering operations in the game.
@@ -24,8 +26,7 @@ public class GameRenderer {
         g.drawImage(gameFieldImage, 0, 0, null);
         switch (state) {
             case GAME_OVER -> drawFinalStatistics(g, players);
-            case STARTED -> drawStartScreen(g, players);
-            case RUNNING, PAUSED, READY_FOR_NEXT_ROUND -> drawScores(g, players);
+            case STARTED, RUNNING, PAUSED, READY_FOR_NEXT_ROUND -> drawScores(g, players);
         }
     }
 
@@ -44,30 +45,18 @@ public class GameRenderer {
         );
     }
 
-    public void drawScorePanel(Graphics g, List<Player> players, Runnable checkForGameEnd) {
-        drawScores(g, players);
-        checkForGameEnd.run();
-    }
-
-    public void clearGameField(Image gameFieldImage) {
-        Graphics2D g2 = (Graphics2D) gameFieldImage.getGraphics();
-        if (g2 == null) {
-            return;
-        }
+    public void clearGameField(BufferedImage gameFieldImage) {
+        Objects.requireNonNull(gameFieldImage, "gameFieldImage must not be null");
+        Graphics2D g2 = gameFieldImage.createGraphics();
         try {
             g2.setColor(RenderSettings.GAME_FIELD_BACKGROUND);
-            g2.fillRect(0, 0, DisplaySettings.PLAY_AREA_WIDTH, DisplaySettings.PLAY_AREA_HEIGHT);
+            g2.fillRect(0, 0, gameFieldImage.getWidth(), gameFieldImage.getHeight());
         } finally {
             g2.dispose();
         }
     }
 
-    void drawStartScreen(Graphics g, List<Player> players) {
-        drawGameField(g);
-        drawScores(g, players);
-    }
-
-    void drawScores(Graphics g, List<Player> players) {
+    public void drawScores(Graphics g, List<Player> players) {
         g.setColor(RenderSettings.SCORE_PANEL_BACKGROUND);
         g.fillRect(DisplaySettings.SCORE_PANEL_X, 0, DisplaySettings.SCORE_PANEL_WIDTH, DisplaySettings.WINDOW_HEIGHT);
 
@@ -76,7 +65,7 @@ public class GameRenderer {
         }
     }
 
-    void drawFinalStatistics(Graphics g, List<Player> players) {
+    public void drawFinalStatistics(Graphics g, List<Player> players) {
         g.setColor(RenderSettings.FINAL_SCREEN_BACKGROUND);
         g.fillRect(0, 0, DisplaySettings.WINDOW_WIDTH, DisplaySettings.WINDOW_HEIGHT);
         g.setColor(RenderSettings.FINAL_SCREEN_TEXT);
@@ -91,16 +80,9 @@ public class GameRenderer {
     private void drawScoreRow(Graphics g, Player player, int rowIndex) {
         g.setColor(player.getColor());
         g.setFont(scoreFont);
-        g.drawString(
-            player.getPlayerName(),
-            UiSettings.SCORE_NAME_X,
-            UiSettings.SCORE_NAME_BASE_Y + (rowIndex * UiSettings.SCORE_ROW_OFFSET_Y)
-        );
-        g.drawString(
-            player.getScore() + UiSettings.SCORE_SUFFIX,
-            UiSettings.SCORE_NAME_X,
-            UiSettings.SCORE_POINTS_BASE_Y + (rowIndex * UiSettings.SCORE_ROW_OFFSET_Y)
-        );
+        var baseY = UiSettings.SCORE_NAME_BASE_Y + (rowIndex * UiSettings.SCORE_ROW_OFFSET_Y);
+        g.drawString(player.getPlayerName(), UiSettings.SCORE_NAME_X, baseY);
+        g.drawString(player.getScore() + UiSettings.SCORE_SUFFIX, UiSettings.SCORE_NAME_X, baseY + UiSettings.SCORE_POINTS_OFFSET_Y);
     }
 
     private void drawFinalScoreRow(Graphics g, Player player, int rowIndex) {

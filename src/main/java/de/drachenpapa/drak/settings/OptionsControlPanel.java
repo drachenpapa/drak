@@ -12,16 +12,17 @@ class OptionsControlPanel extends JPanel {
 
     private final JSpinner speedSpinner;
 
-    OptionsControlPanel(int initialSpeed, int minSpeed, int maxSpeed, ActionListener actionListener) {
+    OptionsControlPanel(int initialSpeed, int minSpeed, int maxSpeed,
+                        ActionListener onStart, ActionListener onLoadDefaults) {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(SettingsConstants.Ui.PANEL_BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(0, 6, 6, 9));
 
         speedSpinner = createSpeedSpinner(initialSpeed, minSpeed, maxSpeed);
         JPanel speedPanel = createSpeedPanel(speedSpinner);
-        JButton loadDefaultsButton = createLoadDefaultsButton(actionListener);
+        JButton loadDefaultsButton = createLoadDefaultsButton(onLoadDefaults);
 
-        JButton startButton = createStartButton(actionListener);
+        JButton startButton = createStartButton(onStart);
 
         JPanel topRow = createTopRow(speedPanel, loadDefaultsButton);
 
@@ -54,7 +55,7 @@ class OptionsControlPanel extends JPanel {
     }
 
     private JButton createLoadDefaultsButton(ActionListener actionListener) {
-        JButton loadDefaultsButton = new JButton(SettingsConstants.Command.LOAD_DEFAULTS.label);
+        JButton loadDefaultsButton = new JButton(SettingsConstants.Text.LOAD_DEFAULTS_BUTTON);
         loadDefaultsButton.setFocusPainted(false);
         loadDefaultsButton.setBackground(SettingsConstants.Ui.LOAD_DEFAULTS_BUTTON_BACKGROUND);
         loadDefaultsButton.addActionListener(actionListener);
@@ -81,7 +82,7 @@ class OptionsControlPanel extends JPanel {
     }
 
     private JButton createStartButton(ActionListener actionListener) {
-        JButton startButton = new JButton(SettingsConstants.Command.START_GAME.label);
+        JButton startButton = new JButton(SettingsConstants.Text.START_GAME_BUTTON);
         startButton.setPreferredSize(new Dimension(SettingsConstants.Ui.OPTIONS_START_BUTTON_WIDTH, SettingsConstants.Ui.OPTIONS_START_BUTTON_HEIGHT));
         startButton.setMaximumSize(new Dimension(SettingsConstants.Ui.OPTIONS_START_BUTTON_WIDTH, SettingsConstants.Ui.OPTIONS_START_BUTTON_HEIGHT));
         startButton.setFocusPainted(false);

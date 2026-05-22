@@ -155,7 +155,7 @@ class CurveTest {
         @DisplayName("activates after interval elapsed and deactivates afterwards")
         void activatesAndDeactivates() {
             Curve gapCurve = new Curve(0, 0, 90, 10);
-            TestReflectionUtils.setField(gapCurve, "lastGapTimestamp", System.currentTimeMillis() - 20);
+            TestReflectionUtils.setField(gapCurve, "ticksSinceLastGap", 10);
 
             gapCurve.tickGap();
             assertThat(gapCurve.isGapActive())
@@ -177,8 +177,7 @@ class CurveTest {
         void continueGapTransitionsFromActiveToInactive() {
             TestReflectionUtils.setField(curve, "isGapActive", true);
             TestReflectionUtils.setField(curve, "gapLengthCounter", 1);
-            TestReflectionUtils.setField(curve, "lastGapTimestamp", System.currentTimeMillis());
-            TestReflectionUtils.setField(curve, "gapInterval", Long.MAX_VALUE);
+            TestReflectionUtils.setField(curve, "gapIntervalTicks", Integer.MAX_VALUE);
 
             curve.tickGap();
             boolean activeAfterFirstTick = curve.isGapActive();

@@ -8,7 +8,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -23,25 +25,36 @@ class InputHandlerTest {
     @Mock
     private GameEngine gameEngine;
 
-    private InputHandler inputHandler;
     private Player player;
+    private JPanel component;
 
     @BeforeEach
     void setUp() {
         player = new Player("Player 1", Color.RED, '1', 'q');
-        inputHandler = new InputHandler(gameEngine);
+        InputHandler inputHandler = new InputHandler(gameEngine);
         when(gameEngine.getPlayers()).thenReturn(List.of(player));
+        component = new JPanel();
+        inputHandler.registerKeyBindings(component);
+    }
+
+    private void triggerKey(char keyChar, boolean onRelease) {
+        int keyCode = KeyEvent.getExtendedKeyCodeForChar(keyChar);
+        KeyStroke ks = KeyStroke.getKeyStroke(keyCode, 0, onRelease);
+        InputMap inputMap = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        String actionKey = (String) inputMap.get(ks);
+        assertThat(actionKey).as("No binding registered for char '%s'", keyChar).isNotNull();
+        component.getActionMap().get(actionKey)
+            .actionPerformed(new ActionEvent(component, ActionEvent.ACTION_PERFORMED, actionKey));
     }
 
     @Nested
-    @DisplayName("keyPressed()")
+    @DisplayName("key pressed")
     class KeyPressed {
 
         @Test
         @DisplayName("registers left key for matching player")
         void registersLeftKey() {
-            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_A, '1');
-            inputHandler.keyPressed(event);
+            triggerKey('1', false);
 
             assertThat(player.isLeftKeyPressed()).isTrue();
             assertThat(player.isRightKeyPressed()).isFalse();
@@ -50,8 +63,7 @@ class InputHandlerTest {
         @Test
         @DisplayName("registers right key for matching player")
         void registersRightKey() {
-            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_D, 'q');
-            inputHandler.keyPressed(event);
+            triggerKey('q', false);
 
             assertThat(player.isRightKeyPressed()).isTrue();
             assertThat(player.isLeftKeyPressed()).isFalse();
@@ -60,23 +72,24 @@ class InputHandlerTest {
         @Test
         @DisplayName("quits game on Escape")
         void quitsGameOnEscape() {
-            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ESCAPE, KeyEvent.CHAR_UNDEFINED);
-            inputHandler.keyPressed(event);
+            KeyStroke escKs = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false);
+            String actionKey = (String) component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).get(escKs);
+            component.getActionMap().get(actionKey)
+                .actionPerformed(new ActionEvent(component, ActionEvent.ACTION_PERFORMED, actionKey));
 
             verify(gameEngine).quitGame();
         }
     }
 
     @Nested
-    @DisplayName("keyReleased()")
+    @DisplayName("key released")
     class KeyReleased {
 
         @Test
         @DisplayName("clears left key for matching player")
         void clearsLeftKey() {
             player.setLeftKeyPressed(true);
-            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_A, '1');
-            inputHandler.keyReleased(event);
+            triggerKey('1', true);
 
             assertThat(player.isLeftKeyPressed()).isFalse();
         }
@@ -85,8 +98,7 @@ class InputHandlerTest {
         @DisplayName("clears right key for matching player")
         void clearsRightKey() {
             player.setRightKeyPressed(true);
-            KeyEvent event = new KeyEvent(new Canvas(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_D, 'q');
-            inputHandler.keyReleased(event);
+            triggerKey('q', true);
 
             assertThat(player.isRightKeyPressed()).isFalse();
         }

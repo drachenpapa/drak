@@ -68,7 +68,7 @@ jobs:
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           cache: ${{ env.JAVA_CACHE }}
       - name: Run integration tests
-        run: mvn -B failsafe:integration-test failsafe:verify -U
+        run: mvn -B test-compile failsafe:integration-test failsafe:verify -U
       - name: Gather integration test results
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3
         if: always()

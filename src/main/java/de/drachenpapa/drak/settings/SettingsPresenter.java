@@ -2,10 +2,6 @@ package de.drachenpapa.drak.settings;
 
 import de.drachenpapa.drak.game.logic.GameConfig;
 import de.drachenpapa.drak.game.logic.GameEngine;
-import de.drachenpapa.drak.game.logic.PlayerConfig;
-
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Presenter for settings configuration.
@@ -17,33 +13,21 @@ public class SettingsPresenter {
     private final ControlKeyInputValidator keyValidator;
 
     public SettingsPresenter() {
-        this(new SettingsPlayerAssembler(), new ControlKeyInputValidator());
+        ControlKeyInputValidator sharedValidator = new ControlKeyInputValidator();
+        this.playerAssembler = new SettingsPlayerAssembler(sharedValidator);
+        this.keyValidator = sharedValidator;
     }
 
-    SettingsPresenter(SettingsPlayerAssembler playerAssembler, ControlKeyInputValidator keyValidator) {
-        this.playerAssembler = Objects.requireNonNull(playerAssembler);
-        this.keyValidator = Objects.requireNonNull(keyValidator);
-    }
-
-    /**
-     * Starts the game with current settings.
-     */
     GameEngine startGame(PlayerSettingsPanel[] playerPanels, int speedLevel) {
-        List<PlayerConfig> playerConfigs = playerAssembler.createSelectedPlayerConfigs(playerPanels);
-        GameConfig gameConfig = new GameConfig(speedLevel, playerConfigs);
-        return new GameEngine(gameConfig);
+        var playerConfigs = playerAssembler.createSelectedPlayerConfigs(playerPanels);
+        var gameConfig = new GameConfig(speedLevel, playerConfigs);
+        return GameEngine.create(gameConfig);
     }
 
-    /**
-     * Validates control key input.
-     */
     public boolean isValidKey(String input) {
-        return !keyValidator.isInvalidKeyInput(input);
+        return keyValidator.isValidKeyInput(input);
     }
 
-    /**
-     * Extracts validated control key character.
-     */
     public char extractKey(String input) {
         return keyValidator.toControlKey(input);
     }

@@ -14,4 +14,8 @@ public final class DisplaySettings {
 
     private DisplaySettings() {
     }
+
+    public static boolean isOutOfBounds(int x, int y) {
+        return x < 0 || x >= PLAY_AREA_WIDTH || y < 0 || y >= PLAY_AREA_HEIGHT;
+    }
 }

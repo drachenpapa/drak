@@ -6,7 +6,7 @@ import de.drachenpapa.drak.game.view.GameWindowFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,12 +25,12 @@ class GameEngineIT {
         ));
 
         GameWindowFactory windowFactory = (panel, engine) -> mock(GameWindow.class);
-        GameEngine engine = new GameEngine(config, windowFactory);
+        GameEngine engine = GameEngine.create(config, windowFactory);
 
         List<Player> players = engine.getPlayers();
-        players.get(0).setCurve(new Curve(100, 100, 0, Long.MAX_VALUE));
-        players.get(1).setCurve(new Curve(200, 100, 0, Long.MAX_VALUE));
-        players.get(2).setCurve(new Curve(300, 100, 0, Long.MAX_VALUE));
+        players.get(0).setCurve(new Curve(100, 100, 0, Integer.MAX_VALUE));
+        players.get(1).setCurve(new Curve(200, 100, 0, Integer.MAX_VALUE));
+        players.get(2).setCurve(new Curve(300, 100, 0, Integer.MAX_VALUE));
 
         GameStateManager stateManager = (GameStateManager) TestReflectionUtils.getField(engine, "gameStateManager");
         stateManager.setGameState(GameState.RUNNING);

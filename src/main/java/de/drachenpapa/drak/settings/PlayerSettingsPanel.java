@@ -8,6 +8,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 /**
  * Panel for configuring individual player settings.
@@ -15,12 +16,13 @@ import java.awt.*;
  */
 class PlayerSettingsPanel extends JPanel {
 
-    final JCheckBox checkBox;
-    final JLabel label;
-    final JTextField nameField;
-    final JButton colorButton;
-    final JButton leftKeyButton;
-    final JButton rightKeyButton;
+    private final JCheckBox checkBox;
+    private final JLabel label;
+    private final JTextField nameField;
+    private final JButton colorButton;
+    private final JButton leftKeyButton;
+    private final JButton rightKeyButton;
+    private Color selectedColor;
 
     PlayerSettingsPanel(int playerIndex, Color defaultColor, char defaultLeftKey, char defaultRightKey) {
         initializePanelLayout();
@@ -31,6 +33,7 @@ class PlayerSettingsPanel extends JPanel {
         colorButton = createDisabledButton(SettingsConstants.Text.COLOR_BUTTON, defaultColor);
         leftKeyButton = createDisabledButton(String.valueOf(defaultLeftKey), null);
         rightKeyButton = createDisabledButton(String.valueOf(defaultRightKey), null);
+        selectedColor = defaultColor;
 
         addRowComponents();
     }
@@ -39,17 +42,12 @@ class PlayerSettingsPanel extends JPanel {
         return Box.createRigidArea(new Dimension(width, 0));
     }
 
-    /**
-     * Creates and registers the "select all" row at the bottom of the parent panel.
-     *
-     * @return the JCheckBox instance so the caller can manage its state.
-     */
     static JCheckBox addAllSelector(JPanel parent, PlayerSettingsPanel[] panels) {
-        JCheckBox allCheckBox = new JCheckBox();
-        JLabel allLabel = new JLabel(SettingsConstants.Text.ALL_LABEL);
+        var allCheckBox = new JCheckBox();
+        var allLabel = new JLabel(SettingsConstants.Text.ALL_LABEL);
 
         allCheckBox.setPreferredSize(new Dimension(SettingsConstants.Ui.ALL_SELECTOR_SIZE, SettingsConstants.Ui.ALL_SELECTOR_SIZE));
-        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        var leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         leftPanel.setOpaque(false);
         leftPanel.add(Box.createRigidArea(new Dimension(SettingsConstants.Ui.ALL_SELECTOR_OFFSET, 0)));
         leftPanel.add(allCheckBox);
@@ -58,8 +56,8 @@ class PlayerSettingsPanel extends JPanel {
 
         allCheckBox.addActionListener(e -> {
             boolean allSelected = allCheckBox.isSelected();
-            for (PlayerSettingsPanel panel : panels) {
-                panel.checkBox.setSelected(allSelected);
+            for (var panel : panels) {
+                panel.setSelected(allSelected);
                 if (allSelected) {
                     panel.enableRow();
                 } else {
@@ -70,28 +68,89 @@ class PlayerSettingsPanel extends JPanel {
         return allCheckBox;
     }
 
+    boolean isSelected() {
+        return checkBox.isSelected();
+    }
+
+    void setSelected(boolean selected) {
+        checkBox.setSelected(selected);
+    }
+
+    void setCheckBoxEnabled() {
+        checkBox.setEnabled(true);
+    }
+
+    String getPlayerName() {
+        return nameField.getText().strip();
+    }
+
+    void setPlayerName(String name) {
+        nameField.setText(name);
+    }
+
+    Color getSelectedColor() {
+        return selectedColor;
+    }
+
+    void setSelectedColor(Color color) {
+        selectedColor = color;
+        colorButton.setBackground(color);
+    }
+
+    String getLeftKey() {
+        return leftKeyButton.getText();
+    }
+
+    void setLeftKey(String key) {
+        leftKeyButton.setText(key);
+    }
+
+    String getRightKey() {
+        return rightKeyButton.getText();
+    }
+
+    void setRightKey(String key) {
+        rightKeyButton.setText(key);
+    }
+
+    void addCheckBoxListener(ActionListener listener) {
+        checkBox.addActionListener(listener);
+    }
+
+    void addColorButtonListener(ActionListener listener) {
+        colorButton.addActionListener(listener);
+    }
+
+    void addLeftKeyButtonListener(ActionListener listener) {
+        leftKeyButton.addActionListener(listener);
+    }
+
+    void addRightKeyButtonListener(ActionListener listener) {
+        rightKeyButton.addActionListener(listener);
+    }
+
     private void initializePanelLayout() {
         setLayout(new FlowLayout(FlowLayout.LEFT, SettingsConstants.Ui.PLAYER_FLOW_GAP, SettingsConstants.Ui.PLAYER_FLOW_GAP));
         setBackground(SettingsConstants.Ui.PANEL_BACKGROUND);
     }
 
     private JLabel createDisabledLabel(int playerIndex) {
-        JLabel playerLabel = new JLabel(SettingsConstants.Players.PLAYER_NAME_PREFIX + (playerIndex + 1) + ":");
+        var playerLabel = new JLabel(SettingsConstants.Players.PLAYER_NAME_PREFIX + (playerIndex + 1) + ":");
         playerLabel.setEnabled(false);
         return playerLabel;
     }
 
     private JTextField createPlayerNameField(int playerIndex) {
-        JTextField field = new JTextField(SettingsConstants.Players.PLAYER_NAME_PREFIX + (playerIndex + 1));
+        var field = new JTextField(SettingsConstants.Players.PLAYER_NAME_PREFIX + (playerIndex + 1));
         field.setPreferredSize(new Dimension(SettingsConstants.Ui.NAME_FIELD_WIDTH, SettingsConstants.Ui.NAME_FIELD_HEIGHT));
-        field.setToolTipText("Max. %d Zeichen".formatted(PlayerConfig.MAX_PLAYER_NAME_LENGTH));
+        field.setToolTipText("Max. %d characters".formatted(PlayerConfig.MAX_PLAYER_NAME_LENGTH));
         ((AbstractDocument) field.getDocument()).setDocumentFilter(new MaxLengthDocumentFilter(PlayerConfig.MAX_PLAYER_NAME_LENGTH));
         field.setEditable(false);
         return field;
     }
 
     private JButton createDisabledButton(String text, Color background) {
-        JButton button = new JButton(text);
+        var button = new JButton(text);
         button.setPreferredSize(new Dimension(SettingsConstants.Ui.KEY_BUTTON_WIDTH, SettingsConstants.Ui.KEY_BUTTON_HEIGHT));
         button.setEnabled(false);
         if (background != null) {
@@ -148,7 +207,7 @@ class PlayerSettingsPanel extends JPanel {
 
         @Override
         public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
-            String replacement = text == null ? "" : text;
+            var replacement = text == null ? "" : text;
             int newLength = fb.getDocument().getLength() - length + replacement.length();
             if (newLength <= maxLength) {
                 super.replace(fb, offset, length, replacement, attrs);

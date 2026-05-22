@@ -68,7 +68,7 @@ class PlayerTest {
             assertThat(curve.getXPosition()).isEqualTo(10 + CurveSpawnSettings.SPAWN_POSITION_OFFSET);
             assertThat(curve.getYPosition()).isEqualTo(20 + CurveSpawnSettings.SPAWN_POSITION_OFFSET);
             assertThat(curve.getDirectionAngle()).isEqualTo(90.0);
-            assertThat(curve.getGapInterval()).isEqualTo(gapIntervalStub);
+            assertThat(curve.getGapIntervalTicks()).isGreaterThan(0);
             assertThat(TestReflectionUtils.getField(curve, "randomGenerator")).isSameAs(rng);
         }
     }

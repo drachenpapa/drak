@@ -13,21 +13,21 @@ import static org.assertj.core.api.Assertions.tuple;
 @DisplayName("SettingsPlayerAssembler")
 class SettingsPlayerAssemblerTest {
 
-    private final SettingsPlayerAssembler assembler = new SettingsPlayerAssembler();
+    private final SettingsPlayerAssembler assembler = new SettingsPlayerAssembler(new ControlKeyInputValidator());
 
     @Test
     @DisplayName("creates configs only for selected player rows")
     void createsConfigsOnlyForSelectedRows() {
         PlayerSettingsPanel first = new PlayerSettingsPanel(0, Color.RED, '1', 'q');
-        first.checkBox.setSelected(true);
-        first.nameField.setText("Alice");
-        first.colorButton.setBackground(Color.MAGENTA);
-        first.leftKeyButton.setText("a");
-        first.rightKeyButton.setText("d");
+        first.setSelected(true);
+        first.setPlayerName("Alice");
+        first.setSelectedColor(Color.MAGENTA);
+        first.setLeftKey("a");
+        first.setRightKey("d");
 
         PlayerSettingsPanel second = new PlayerSettingsPanel(1, Color.GREEN, 'y', 'x');
-        second.checkBox.setSelected(false);
-        second.nameField.setText("Bob");
+        second.setSelected(false);
+        second.setPlayerName("Bob");
 
         List<PlayerConfig> configs = assembler.createSelectedPlayerConfigs(new PlayerSettingsPanel[]{first, second});
 
@@ -41,7 +41,7 @@ class SettingsPlayerAssemblerTest {
     @DisplayName("returns empty list when no rows are selected")
     void returnsEmptyListWhenNoRowsAreSelected() {
         PlayerSettingsPanel panel = new PlayerSettingsPanel(0, Color.RED, '1', 'q');
-        panel.checkBox.setSelected(false);
+        panel.setSelected(false);
 
         List<PlayerConfig> configs = assembler.createSelectedPlayerConfigs(new PlayerSettingsPanel[]{panel});
 

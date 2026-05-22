@@ -4,29 +4,37 @@ import de.drachenpapa.drak.game.logic.PlayerConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Builds runtime Player instances from selected settings rows.
  */
 class SettingsPlayerAssembler {
 
+    private final ControlKeyInputValidator keyValidator;
+
+
+    SettingsPlayerAssembler(ControlKeyInputValidator keyValidator) {
+        this.keyValidator = Objects.requireNonNull(keyValidator, "keyValidator");
+    }
+
     List<PlayerConfig> createSelectedPlayerConfigs(PlayerSettingsPanel[] panels) {
-        List<PlayerConfig> playerConfigs = new ArrayList<>(panels.length);
-        for (PlayerSettingsPanel panel : panels) {
-            if (!panel.checkBox.isSelected()) {
+        var playerConfigs = new ArrayList<PlayerConfig>(panels.length);
+        for (var panel : panels) {
+            if (!panel.isSelected()) {
                 continue;
             }
-            char leftKey = extractSingleKey(panel.leftKeyButton.getText(), "left");
-            char rightKey = extractSingleKey(panel.rightKeyButton.getText(), "right");
-            playerConfigs.add(new PlayerConfig(panel.nameField.getText(), panel.colorButton.getBackground(), leftKey, rightKey));
+            char leftKey = extractSingleKey(panel.getLeftKey(), "left");
+            char rightKey = extractSingleKey(panel.getRightKey(), "right");
+            playerConfigs.add(new PlayerConfig(panel.getPlayerName(), panel.getSelectedColor(), leftKey, rightKey));
         }
         return playerConfigs;
     }
 
     private char extractSingleKey(String keyText, String side) {
-        if (keyText == null || keyText.length() != 1 || Character.isWhitespace(keyText.charAt(0))) {
+        if (!keyValidator.isValidKeyInput(keyText)) {
             throw new IllegalStateException("Invalid %s control key in settings UI.".formatted(side));
         }
-        return keyText.charAt(0);
+        return keyValidator.toControlKey(keyText);
     }
 }

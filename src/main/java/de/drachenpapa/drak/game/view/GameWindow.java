@@ -1,16 +1,19 @@
 package de.drachenpapa.drak.game.view;
 
+import de.drachenpapa.drak.SwingUtils;
 import de.drachenpapa.drak.game.logic.GameEngine;
 import de.drachenpapa.drak.game.logic.InputHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import static de.drachenpapa.drak.Drak.GAME_TITLE;
+
+import static de.drachenpapa.drak.AppConstants.GAME_TITLE;
 
 /**
  * Manages the main game window and its configuration.
@@ -18,7 +21,7 @@ import static de.drachenpapa.drak.Drak.GAME_TITLE;
  */
 public class GameWindow {
 
-    private static final Logger logger = Logger.getLogger(GameWindow.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(GameWindow.class);
 
     private final JFrame frame;
 
@@ -29,30 +32,35 @@ public class GameWindow {
         hideCursor(gamePanel);
     }
 
-    private void initializeWindowIcon() {
-        URL logoUrl = getClass().getResource("/logo.png");
-        if (logoUrl != null) {
-            frame.setIconImage(Toolkit.getDefaultToolkit().getImage(logoUrl));
-        } else {
-            logger.log(Level.WARNING, "Logo resource not found [/logo.png]; window icon will not be set");
-        }
-    }
-
-    private void configureFrame(GamePanel gamePanel, GameEngine gameEngine) {
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setContentPane(gamePanel);
-        frame.pack();
-        frame.setResizable(false);
+    public void show() {
         frame.setVisible(true);
-        frame.addKeyListener(new InputHandler(gameEngine));
-    }
-
-    private void hideCursor(GamePanel gamePanel) {
-        BufferedImage cursorImg = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
-        gamePanel.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), ""));
     }
 
     public void close() {
         frame.dispose();
+    }
+
+    private void initializeWindowIcon() {
+        SwingUtils.applyWindowIcon(frame, "/logo.png", logger);
+    }
+
+    private void configureFrame(GamePanel gamePanel, GameEngine gameEngine) {
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                gameEngine.quitGame();
+            }
+        });
+        frame.setContentPane(gamePanel);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setResizable(false);
+        new InputHandler(gameEngine).registerKeyBindings(gamePanel);
+    }
+
+    private void hideCursor(GamePanel gamePanel) {
+        var cursorImg = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+        gamePanel.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), ""));
     }
 }

@@ -11,9 +11,8 @@ public final class CurvePhysicsSettings {
     public static final int MAX_GAP_LENGTH = 4;
     public static final double STEP_SIZE = 6.0;
     public static final double TURN_ANGLE_DEGREES = 10.0;
-    public static final int ANGLE_FULL_CIRCLE = 360;
+    public static final double ANGLE_FULL_CIRCLE = 360.0;
     public static final int MAX_STORED_POINTS = 50_000;
-    public static final int POINT_TRIM_CHUNK_SIZE = 1_000;
 
     private CurvePhysicsSettings() {
     }

@@ -32,11 +32,11 @@ class PlayerManagerTest {
         @Test
         @DisplayName("reflects changes in alive state")
         void reflectsChangesInAliveState() {
-            players.get(0).setAlive(true);
-            players.get(1).setAlive(false);
+            players.get(0).revive();
+            players.get(1).kill();
             assertThat(playerManager.getAlivePlayerCount()).isEqualTo(1);
 
-            players.get(1).setAlive(true);
+            players.get(1).revive();
             assertThat(playerManager.getAlivePlayerCount()).isEqualTo(2);
         }
     }
@@ -48,13 +48,13 @@ class PlayerManagerTest {
         @Test
         @DisplayName("sets all players alive and resets their curves")
         void setsAllPlayersAliveAndResetsCurves() {
-            players.get(0).setAlive(false);
-            players.get(1).setAlive(false);
+            players.get(0).kill();
+            players.get(1).kill();
             players.get(0).setCurve(new Curve(1, 1, 0, 1));
             players.get(1).setCurve(new Curve(2, 2, 0, 1));
             Curve firstBefore = players.get(0).getCurve();
             Curve secondBefore = players.get(1).getCurve();
-            playerManager.getOccupiedGrid()[10][10] = 1;
+            playerManager.markTrailOwner(10, 10, 1);
 
             playerManager.resetForNextRound();
 
@@ -69,7 +69,7 @@ class PlayerManagerTest {
                     .isNotSameAs(firstBefore),
                 () -> assertThat(players.get(1).getCurve())
                     .isNotSameAs(secondBefore),
-                () -> assertThat(playerManager.getOccupiedGrid()[10][10])
+                () -> assertThat(playerManager.getTrailOwner(10, 10))
                     .isZero()
             );
         }
@@ -82,8 +82,8 @@ class PlayerManagerTest {
         @Test
         @DisplayName("only increments score for alive players")
         void onlyIncrementsScoreForAlivePlayers() {
-            players.get(0).setAlive(true);
-            players.get(1).setAlive(false);
+            players.get(0).revive();
+            players.get(1).kill();
             int initialScore = players.get(0).getScore();
 
             playerManager.increasePointsForAlivePlayers();

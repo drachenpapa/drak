@@ -27,37 +27,49 @@ class ControlKeyInputValidatorTest {
     }
 
     @Nested
-    @DisplayName("isInvalidKeyInput")
-    class IsInvalidKeyInput {
+    @DisplayName("isValidKeyInput")
+    class IsValidKeyInput {
 
         @Test
-        @DisplayName("returns true for null")
-        void returnsTrueForNull() {
-            assertThat(validator.isInvalidKeyInput(null)).isTrue();
+        @DisplayName("returns false for null")
+        void returnsFalseForNull() {
+            assertThat(validator.isValidKeyInput(null)).isFalse();
         }
 
         @Test
-        @DisplayName("returns true for empty string")
-        void returnsTrueForEmptyString() {
-            assertThat(validator.isInvalidKeyInput("")).isTrue();
+        @DisplayName("returns false for empty string")
+        void returnsFalseForEmptyString() {
+            assertThat(validator.isValidKeyInput("")).isFalse();
         }
 
         @Test
-        @DisplayName("returns true for multiple characters")
-        void returnsTrueForMultipleCharacters() {
-            assertThat(validator.isInvalidKeyInput("ab")).isTrue();
+        @DisplayName("returns false for multiple characters")
+        void returnsFalseForMultipleCharacters() {
+            assertThat(validator.isValidKeyInput("ab")).isFalse();
         }
 
         @Test
-        @DisplayName("returns true for whitespace")
-        void returnsTrueForWhitespace() {
-            assertThat(validator.isInvalidKeyInput(" ")).isTrue();
+        @DisplayName("returns false for whitespace")
+        void returnsFalseForWhitespace() {
+            assertThat(validator.isValidKeyInput(" ")).isFalse();
         }
 
         @Test
-        @DisplayName("returns false for single non-whitespace character")
-        void returnsFalseForSingleCharacter() {
-            assertThat(validator.isInvalidKeyInput("x")).isFalse();
+        @DisplayName("returns true for single non-whitespace character")
+        void returnsTrueForSingleCharacter() {
+            assertThat(validator.isValidKeyInput("x")).isTrue();
+        }
+
+        @Test
+        @DisplayName("returns false for ISO control character (e.g. ESC)")
+        void returnsFalseForControlCharacter() {
+            assertThat(validator.isValidKeyInput("\u001B")).isFalse();
+        }
+
+        @Test
+        @DisplayName("returns false for null byte")
+        void returnsFalseForNullByte() {
+            assertThat(validator.isValidKeyInput("\u0000")).isFalse();
         }
     }
 }

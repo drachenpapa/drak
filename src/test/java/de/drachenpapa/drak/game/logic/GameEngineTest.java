@@ -11,7 +11,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -59,7 +58,7 @@ class GameEngineTest {
             new PlayerConfig("Player 1", Color.RED, '1', 'q'),
             new PlayerConfig("Player 2", Color.GREEN, 'y', 'x')
         ));
-        gameEngine = new GameEngine(config, gameWindowFactory);
+        gameEngine = GameEngine.create(config, gameWindowFactory);
 
         TestReflectionUtils.setField(gameEngine, "gameStateManager", gameStateManager);
         TestReflectionUtils.setField(gameEngine, "gamePanel", gamePanel);
@@ -78,7 +77,7 @@ class GameEngineTest {
                 new PlayerConfig("Player 2", Color.GREEN, 'y', 'x')
             ));
 
-            GameEngine engine = new GameEngine(config, gameWindowFactory);
+            GameEngine engine = GameEngine.create(config, gameWindowFactory);
 
             verify(gameWindowFactory).create(any(), any());
             assertThat(TestReflectionUtils.getField(engine, "gameSpeed")).isEqualTo(30);
@@ -97,7 +96,7 @@ class GameEngineTest {
                 new PlayerConfig("Four", Color.YELLOW, '4', '5')
             ));
 
-            GameEngine engine = new GameEngine(config, gameWindowFactory);
+            GameEngine engine = GameEngine.create(config, gameWindowFactory);
 
             GameStateManager stateManager = (GameStateManager) TestReflectionUtils.getField(engine, "gameStateManager");
             assertThat(stateManager).isNotNull();
@@ -110,11 +109,10 @@ class GameEngineTest {
     class HandleRoundTransition {
 
         @Test
-        @DisplayName("delegates to GameStateManager and repaints panel")
-        void delegatesToGameStateManagerAndRepaints() {
+        @DisplayName("delegates to GameStateManager; repaint is the caller's responsibility")
+        void delegatesToGameStateManager() {
             gameEngine.handleRoundTransition();
             verify(gameStateManager).handleRoundTransition(any());
-            verify(gamePanel).repaint();
         }
     }
 
@@ -163,6 +161,13 @@ class GameEngineTest {
         }
 
         @Test
+        @DisplayName("shows game window on start")
+        void showsGameWindow() {
+            gameEngine.startGame();
+            verify(gameWindow).show();
+        }
+
+        @Test
         @DisplayName("stops existing timer before creating a new one")
         void stopsExistingTimerBeforeCreatingNewOne() {
             Timer oldTimer = mock(Timer.class);
@@ -195,6 +200,8 @@ class GameEngineTest {
             gameEngine.startGame();
             Timer timer = (Timer) TestReflectionUtils.getField(gameEngine, "gameTimer");
             assertThat(timer).isNotNull();
+            timer.stop();
+            clearInvocations(gamePanel);
 
             for (ActionListener listener : timer.getActionListeners()) {
                 listener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "tick"));
@@ -234,7 +241,6 @@ class GameEngineTest {
         @Test
         @DisplayName("updateGameState moves players when game is not over")
         void updateGameStateMovesPlayersWhenNotGameOver() {
-            when(gameStateManager.getGameState()).thenReturn(GameState.RUNNING);
             Player firstPlayer = gameEngine.getPlayers().getFirst();
             int beforePointCount = firstPlayer.getCurve().getPoints().size();
 
@@ -246,7 +252,6 @@ class GameEngineTest {
         @Test
         @DisplayName("updateGameState updates game field occupancy when running")
         void updateGameStateUpdatesGameFieldOccupancyWhenRunning() {
-            when(gameStateManager.getGameState()).thenReturn(GameState.RUNNING);
             PlayerManager manager = (PlayerManager) TestReflectionUtils.getField(gameEngine, "playerManager");
             assertThat(manager).isNotNull();
 
@@ -261,12 +266,11 @@ class GameEngineTest {
         @Test
         @DisplayName("updateGameState ticks gaps for alive players")
         void updateGameStateTicksGapsForAlivePlayers() {
-            when(gameStateManager.getGameState()).thenReturn(GameState.RUNNING);
             Player player = gameEngine.getPlayers().getFirst();
             Curve gapCurve = new Curve(100, 100, 0, 1);
-            TestReflectionUtils.setField(gapCurve, "lastGapTimestamp", System.currentTimeMillis() - 10);
+            TestReflectionUtils.setField(gapCurve, "ticksSinceLastGap", 1);
             player.setCurve(gapCurve);
-            player.setAlive(true);
+            player.revive();
 
             TestReflectionUtils.invokeMethod(gameEngine, "updateGameState");
 
@@ -274,60 +278,48 @@ class GameEngineTest {
         }
 
         @Test
-        @DisplayName("updateGameState skips updates when game is over")
-        void updateGameStateSkipsWhenGameOver() {
-            when(gameStateManager.getGameState()).thenReturn(GameState.GAME_OVER);
+        @DisplayName("updateGameState always processes players; GAME_OVER guard lives in handleGameTick")
+        void updateGameStateAlwaysProcessesPlayers() {
             Player firstPlayer = gameEngine.getPlayers().getFirst();
             int beforePointCount = firstPlayer.getCurve().getPoints().size();
 
             TestReflectionUtils.invokeMethod(gameEngine, "updateGameState");
 
-            assertThat(firstPlayer.getCurve().getPoints()).hasSize(beforePointCount);
+            assertThat(firstPlayer.getCurve().getPoints()).hasSize(beforePointCount + 1);
         }
 
         @Test
-        @DisplayName("handleCollision delegates to collision manager and score rendering")
-        void handleCollisionDelegatesToCollisionAndScoreRendering() {
+        @DisplayName("handleCollision delegates to collision manager and game-end check")
+        void handleCollisionDelegatesToCollisionAndGameEndCheck() {
             TestReflectionUtils.setField(gameEngine, "collisionManager", collisionManager);
-            TestReflectionUtils.setField(gameEngine, "gameRenderer", gameRenderer);
-            Graphics graphics = mock(Graphics.class);
 
-            TestReflectionUtils.invokeMethod(gameEngine, "handleCollision", graphics, 0);
+            TestReflectionUtils.invokeMethod(gameEngine, "handleCollision", 0);
 
             verify(collisionManager).handleCollision(0);
-            verify(gameRenderer).drawScorePanel(any(Graphics.class), any(), any());
-
-            ArgumentCaptor<Runnable> gameEndCheck = ArgumentCaptor.forClass(Runnable.class);
-            verify(gameRenderer).drawScorePanel(any(Graphics.class), any(), gameEndCheck.capture());
-            gameEndCheck.getValue().run();
             verify(gameStateManager).checkForGameEnd();
         }
 
         @Test
-        @DisplayName("updateCurvesAndDraw draws player curve for alive player without collision")
-        void updateCurvesAndDrawDrawsCurveWhenNoCollision() {
+        @DisplayName("drawCurveTrails draws player curve for alive player without gap")
+        void drawCurveTrailsDrawsCurveForAlivePlayer() {
             setNoGapCurvesForAllPlayers();
-            TestReflectionUtils.setField(gameEngine, "collisionManager", collisionManager);
             TestReflectionUtils.setField(gameEngine, "gameRenderer", gameRenderer);
-            when(collisionManager.isCollisionDetected(any(), anyInt())).thenReturn(false);
 
-            TestReflectionUtils.invokeMethod(gameEngine, "updateCurvesAndDraw");
+            TestReflectionUtils.invokeMethod(gameEngine, "drawCurveTrails");
 
             verify(gameRenderer, atLeastOnce()).drawPlayerCurve(any(), any(), any());
         }
 
         @Test
-        @DisplayName("updateCurvesAndDraw handles collisions when collision manager reports hit")
-        void updateCurvesAndDrawHandlesCollisionWhenDetected() {
+        @DisplayName("detectCollisions handles collisions when collision manager reports hit")
+        void detectCollisionsHandlesCollisionWhenDetected() {
             setNoGapCurvesForAllPlayers();
             TestReflectionUtils.setField(gameEngine, "collisionManager", collisionManager);
-            TestReflectionUtils.setField(gameEngine, "gameRenderer", gameRenderer);
             when(collisionManager.isCollisionDetected(any(), anyInt())).thenReturn(true);
 
-            TestReflectionUtils.invokeMethod(gameEngine, "updateCurvesAndDraw");
+            TestReflectionUtils.invokeMethod(gameEngine, "detectCollisions");
 
             verify(collisionManager, atLeastOnce()).handleCollision(anyInt());
-            verify(gameRenderer, atLeastOnce()).drawScorePanel(any(Graphics.class), any(), any());
         }
 
         @Test
@@ -336,8 +328,8 @@ class GameEngineTest {
             List<Player> players = gameEngine.getPlayers();
             Player leftPlayer = players.get(0);
             Player rightPlayer = players.get(1);
-            Curve leftCurve = new Curve(100, 100, 0, Long.MAX_VALUE);
-            Curve rightCurve = new Curve(200, 200, 0, Long.MAX_VALUE);
+            Curve leftCurve = new Curve(100, 100, 0, Integer.MAX_VALUE);
+            Curve rightCurve = new Curve(200, 200, 0, Integer.MAX_VALUE);
             leftPlayer.setCurve(leftCurve);
             rightPlayer.setCurve(rightCurve);
             leftPlayer.setLeftKeyPressed(true);
@@ -350,12 +342,10 @@ class GameEngineTest {
         }
 
         @Test
-        @DisplayName("updateCurvesAndDraw disposes graphics context")
-        void updateCurvesAndDrawDisposesGraphicsContext() {
+        @DisplayName("drawCurveTrails disposes graphics context")
+        void drawCurveTrailsDisposesGraphicsContext() {
             setNoGapCurvesForAllPlayers();
-            TestReflectionUtils.setField(gameEngine, "collisionManager", collisionManager);
             TestReflectionUtils.setField(gameEngine, "gameRenderer", gameRenderer);
-            when(collisionManager.isCollisionDetected(any(), anyInt())).thenReturn(false);
 
             Graphics2D g2 = mock(Graphics2D.class);
             BufferedImage image = new BufferedImage(8, 8, BufferedImage.TYPE_INT_ARGB) {
@@ -366,7 +356,7 @@ class GameEngineTest {
             };
             TestReflectionUtils.setField(gameEngine, "gameFieldImage", image);
 
-            TestReflectionUtils.invokeMethod(gameEngine, "updateCurvesAndDraw");
+            TestReflectionUtils.invokeMethod(gameEngine, "drawCurveTrails");
 
             verify(g2).dispose();
         }
@@ -374,8 +364,8 @@ class GameEngineTest {
         private void setNoGapCurvesForAllPlayers() {
             List<Player> players = gameEngine.getPlayers();
             for (int i = 0; i < players.size(); i++) {
-                players.get(i).setCurve(new Curve(100 + (i * 50), 100, 0, Long.MAX_VALUE));
-                players.get(i).setAlive(true);
+                players.get(i).setCurve(new Curve(100 + (i * 50), 100, 0, Integer.MAX_VALUE));
+                players.get(i).revive();
             }
         }
 

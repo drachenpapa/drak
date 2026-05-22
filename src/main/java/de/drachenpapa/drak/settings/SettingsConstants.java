@@ -1,5 +1,8 @@
 package de.drachenpapa.drak.settings;
 
+import de.drachenpapa.drak.game.config.BalanceSettings;
+import de.drachenpapa.drak.game.logic.GameConfig;
+
 import java.awt.*;
 
 /**
@@ -8,17 +11,6 @@ import java.awt.*;
 final class SettingsConstants {
 
     private SettingsConstants() {
-    }
-
-    enum Command {
-        START_GAME("Start Game"),
-        LOAD_DEFAULTS("Load Defaults");
-
-        final String label;
-
-        Command(String label) {
-            this.label = label;
-        }
     }
 
     static final class Players {
@@ -53,17 +45,15 @@ final class SettingsConstants {
     }
 
     static final class Speed {
-        static final int DEFAULT = 3;
-        static final int MIN = 1;
-        static final int MAX = 5;
+        static final int DEFAULT = BalanceSettings.DEFAULT_SPEED_LEVEL;
+        static final int MIN = GameConfig.MIN_SPEED;
+        static final int MAX = GameConfig.MAX_SPEED;
 
         private Speed() {
         }
     }
 
     static final class Ui {
-        static final int FRAME_WIDTH = 600;
-        static final int FRAME_HEIGHT = 500;
         static final Color PANEL_BACKGROUND = new Color(205, 205, 205);
         static final Color LOAD_DEFAULTS_BUTTON_BACKGROUND = new Color(180, 180, 180);
         static final Color START_BUTTON_BACKGROUND = new Color(80, 150, 240);
@@ -108,6 +98,8 @@ final class SettingsConstants {
         static final String SPEED_LEVEL_LABEL = "Speed Level:";
         static final String ALL_LABEL = "All";
         static final String COLOR_BUTTON = "Color";
+        static final String START_GAME_BUTTON = "Start Game";
+        static final String LOAD_DEFAULTS_BUTTON = "Load Defaults";
 
         private Text() {
         }

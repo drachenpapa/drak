@@ -61,7 +61,9 @@ class GameStateManagerTest {
         @Test
         @DisplayName("transitions to GAME_OVER when a player reaches winning score")
         void transitionsToGameOverOnWinningScore() {
-            players.getFirst().setScore(3);
+            players.getFirst().increaseScore();
+            players.getFirst().increaseScore();
+            players.getFirst().increaseScore();
             gameStateManager.checkForGameEnd();
             assertThat(gameStateManager.getGameState()).isEqualTo(GameState.GAME_OVER);
         }
@@ -69,8 +71,8 @@ class GameStateManagerTest {
         @Test
         @DisplayName("transitions to READY_FOR_NEXT_ROUND when only one player is alive")
         void transitionsToReadyForNextRoundWithOneAlivePlayer() {
-            players.get(0).setAlive(true);
-            players.get(1).setAlive(false);
+            players.get(0).revive();
+            players.get(1).kill();
             when(playerManager.getAlivePlayerCount()).thenReturn(1);
 
             gameStateManager.checkForGameEnd();
@@ -81,10 +83,10 @@ class GameStateManagerTest {
         @Test
         @DisplayName("remains RUNNING when no end condition is met")
         void remainsRunningWithoutEndCondition() {
-            players.get(0).setScore(1);
-            players.get(1).setScore(1);
-            players.get(0).setAlive(true);
-            players.get(1).setAlive(true);
+            players.get(0).increaseScore();
+            players.get(1).increaseScore();
+            players.get(0).revive();
+            players.get(1).revive();
             when(playerManager.getAlivePlayerCount()).thenReturn(2);
 
             gameStateManager.setGameState(GameState.RUNNING);

@@ -20,14 +20,14 @@
     <logback.version>1.5.18</logback.version>
     <junit-jupiter.version>6.0.3</junit-jupiter.version>
     <mockito.version>5.23.0</mockito.version>
-    <byte-buddy.version>1.17.7</byte-buddy.version>
+    <byte-buddy.version>1.17.8</byte-buddy.version>
     <assertj.version>3.27.7</assertj.version>
     <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>
     <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
     <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
-    <pitest-maven.version>1.19.4</pitest-maven.version>
-    <pitest-junit5-plugin.version>1.2.2</pitest-junit5-plugin.version>
+    <pitest-maven.version>1.19.6</pitest-maven.version>
+    <pitest-junit5-plugin.version>1.2.3</pitest-junit5-plugin.version>
   </properties>
 
   <dependencies>

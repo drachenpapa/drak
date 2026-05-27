@@ -20,7 +20,7 @@
     <logback.version>1.5.32</logback.version>
     <junit-jupiter.version>6.1.0</junit-jupiter.version>
     <mockito.version>5.23.0</mockito.version>
-    <byte-buddy.version>1.17.8</byte-buddy.version>
+    <byte-buddy.version>1.18.8-jdk5</byte-buddy.version>
     <assertj.version>3.27.7</assertj.version>
     <maven-surefire-plugin.version>3.5.5</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.5.5</maven-failsafe-plugin.version>

@@ -17,7 +17,7 @@
     <flatlaf.version>3.7.1</flatlaf.version>
     <lombok.version>1.18.46</lombok.version>
     <slf4j.version>2.0.18</slf4j.version>
-    <logback.version>1.5.33</logback.version>
+    <logback.version>1.5.34</logback.version>
     <junit-jupiter.version>6.1.0</junit-jupiter.version>
     <mockito.version>5.23.0</mockito.version>
     <byte-buddy.version>1.18.9-jdk5</byte-buddy.version>

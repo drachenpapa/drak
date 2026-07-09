@@ -6,6 +6,7 @@ import de.drachenpapa.drak.game.logic.PlayerManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Serial;
 
 /**
  * Main panel for rendering the game field and UI elements.
@@ -13,17 +14,18 @@ import java.awt.*;
  */
 public class GamePanel extends JPanel {
 
-    private final GameRenderer gameRenderer;
-    private final PlayerManager playerManager;
-    private final GameStateManager gameStateManager;
-    private final GameEngine gameEngine;
-    private final Image gameFieldImage;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    public GamePanel(GameRenderer gameRenderer, PlayerManager playerManager, GameStateManager gameStateManager, GameEngine gameEngine, Image gameFieldImage) {
+    private final transient GameRenderer gameRenderer;
+    private final transient PlayerManager playerManager;
+    private final transient GameStateManager gameStateManager;
+    private final transient Image gameFieldImage;
+
+    public GamePanel(GameRenderer gameRenderer, PlayerManager playerManager, GameStateManager gameStateManager, Image gameFieldImage) {
         this.gameRenderer = gameRenderer;
         this.playerManager = playerManager;
         this.gameStateManager = gameStateManager;
-        this.gameEngine = gameEngine;
         this.gameFieldImage = gameFieldImage;
         setPreferredSize(new Dimension(GameEngine.WINDOW_WIDTH, GameEngine.WINDOW_HEIGHT));
         setBackground(Color.black);
@@ -33,11 +35,10 @@ public class GamePanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         gameRenderer.drawGame(
-                g,
-                gameFieldImage,
-                playerManager.getPlayers(),
-                gameStateManager.getGameState(),
-                gameEngine::handleRoundTransition
+            g,
+            gameFieldImage,
+            playerManager.getPlayers(),
+            gameStateManager.getGameState()
         );
     }
 }

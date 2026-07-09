@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,12 +38,9 @@ class GameEngineTest {
     void setUp() {
         when(gameWindowFactory.create(any(), any())).thenReturn(gameWindow);
         List<Player> players = List.of(
-                new Player("Player 1", Color.RED, '1', 'q'),
-                new Player("Player 2", Color.GREEN, 'y', 'x'));
-        gameEngine = new GameEngine(players, 3, gameWindowFactory);
-
-        ReflectionTestUtils.setField(gameEngine, "gameStateManager", gameStateManager);
-        ReflectionTestUtils.setField(gameEngine, "gamePanel", gamePanel);
+            new Player("Player 1", Color.RED, '1', 'q'),
+            new Player("Player 2", Color.GREEN, 'y', 'x'));
+        gameEngine = new GameEngine(players, 3, gameWindowFactory, gameStateManager, gamePanel, () -> { });
     }
 
     @Nested
@@ -51,11 +48,10 @@ class GameEngineTest {
     class HandleRoundTransition {
 
         @Test
-        @DisplayName("delegates to GameStateManager and repaints panel")
-        void delegatesToGameStateManagerAndRepaints() {
+        @DisplayName("delegates to GameStateManager")
+        void delegatesToGameStateManager() {
             gameEngine.handleRoundTransition();
             verify(gameStateManager).handleRoundTransition(any());
-            verify(gamePanel).repaint();
         }
     }
 
@@ -69,6 +65,21 @@ class GameEngineTest {
             gameEngine.quitGame();
             verify(gameStateManager).setGameState(GameState.GAME_OVER);
             verify(gameWindow).close();
+        }
+
+        @Test
+        @DisplayName("invokes the onGameEnd callback")
+        void invokesOnGameEndCallback() {
+            boolean[] called = {false};
+            GameEngine engineWithCallback = new GameEngine(
+                List.of(
+                    new Player("Player 1", Color.RED, '1', 'q'),
+                    new Player("Player 2", Color.GREEN, 'y', 'x')),
+                3, gameWindowFactory, gameStateManager, gamePanel, () -> called[0] = true);
+
+            engineWithCallback.quitGame();
+
+            assertThat(called[0]).isTrue();
         }
     }
 

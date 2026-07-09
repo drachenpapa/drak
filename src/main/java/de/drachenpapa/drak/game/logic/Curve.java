@@ -6,13 +6,12 @@ import lombok.Setter;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Represents a player's curve on the game field.
  * Handles movement, direction, and gap logic for the curve.
  */
-@Getter
-@Setter
 public class Curve {
 
     private static final long MAX_GAP_INTERVAL = 6000L;
@@ -22,16 +21,30 @@ public class Curve {
     private static final double STEP_SIZE = 6.0;
     private static final double TURN_ANGLE = 10.0;
 
+    @Getter
+    private final List<Point> points = new ArrayList<>();
+    private final Random random = new Random();
+
+    @Getter
     private double directionAngle;
+    @Getter
+    @Setter
     private int xPosition;
+    @Getter
+    @Setter
     private int yPosition;
+    @Getter
+    @Setter
     private int previousXPosition;
+    @Getter
+    @Setter
     private int previousYPosition;
+
     private int gapLengthCounter;
     private long lastGapTimestamp;
     private long gapInterval;
     private boolean isGapActive;
-    private final List<Point> points = new ArrayList<>();
+
 
     Curve(int xPosition, int yPosition, double directionAngle, long gapInterval) {
         this.xPosition = xPosition;
@@ -49,9 +62,11 @@ public class Curve {
     void move() {
         previousXPosition = xPosition;
         previousYPosition = yPosition;
+
         double radians = Math.toRadians(directionAngle);
         xPosition += (int) (Math.cos(radians) * STEP_SIZE);
         yPosition -= (int) (Math.sin(radians) * STEP_SIZE);
+
         addPoint(xPosition, yPosition);
     }
 
@@ -78,8 +93,8 @@ public class Curve {
     private void startNewGap(long currentTime) {
         isGapActive = true;
         lastGapTimestamp = currentTime;
-        gapInterval = MIN_GAP_INTERVAL + (long) (Math.random() * (MAX_GAP_INTERVAL - MIN_GAP_INTERVAL));
-        gapLengthCounter = MIN_GAP_LENGTH + (int) (Math.random() * (MAX_GAP_LENGTH - MIN_GAP_LENGTH + 1));
+        gapInterval = MIN_GAP_INTERVAL + random.nextLong(MAX_GAP_INTERVAL - MIN_GAP_INTERVAL);
+        gapLengthCounter = MIN_GAP_LENGTH + random.nextInt(MAX_GAP_LENGTH - MIN_GAP_LENGTH + 1);
     }
 
     private boolean continueGap() {

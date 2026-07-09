@@ -2,6 +2,7 @@ package de.drachenpapa.drak.settings;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.Serial;
 
 /**
  * Panel for configuring individual player settings.
@@ -9,8 +10,8 @@ import java.awt.*;
  */
 class PlayerSettingsPanel extends JPanel {
 
-    static final JCheckBox allCheckBox = new JCheckBox();
-    static final JLabel allLabel = new JLabel("All");
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     final JCheckBox checkBox;
     final JLabel label;
@@ -56,7 +57,9 @@ class PlayerSettingsPanel extends JPanel {
         add(rightKeyButton);
     }
 
-    static void addAllSelector(JPanel parent, PlayerSettingsPanel[] panels) {
+    static JCheckBox addAllSelector(JPanel parent, PlayerSettingsPanel[] panels) {
+        JCheckBox allCheckBox = new JCheckBox();
+        JLabel allLabel = new JLabel("All");
         allCheckBox.setPreferredSize(new Dimension(25, 25));
         JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         leftPanel.setOpaque(false);
@@ -76,6 +79,7 @@ class PlayerSettingsPanel extends JPanel {
                 }
             }
         });
+        return allCheckBox;
     }
 
     void enableRow() {

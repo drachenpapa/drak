@@ -3,6 +3,8 @@ package de.drachenpapa.drak.game.logic;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.swing.*;
+
 /**
  * Manages the current game state and transitions.
  * Provides methods for state changes and round handling.
@@ -36,10 +38,12 @@ public class GameStateManager {
     void handleRoundTransition(Runnable resetRound) {
         if (gameState == GameState.READY_FOR_NEXT_ROUND) {
             gameState = GameState.PAUSED;
-            new javax.swing.Timer(1000, e -> {
-                resetRound.run();
-                gameState = GameState.RUNNING;
-                ((javax.swing.Timer) e.getSource()).stop();
+            new Timer(1000, e -> {
+                if (gameState == GameState.PAUSED) {
+                    resetRound.run();
+                    gameState = GameState.RUNNING;
+                }
+                ((Timer) e.getSource()).stop();
             }).start();
         }
     }

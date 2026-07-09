@@ -14,19 +14,28 @@ import java.util.List;
  */
 public class GameRenderer {
 
-    public void drawGame(Graphics g, Image gameFieldImage, List<Player> players, GameState state, Runnable handleRoundTransition) {
+    private static final int SCORE_PANEL_X = 682;
+    private static final int SCORE_TEXT_X = 690;
+    private static final int SCORE_FIRST_NAME_Y = 30;
+    private static final int SCORE_FIRST_PTS_Y = 50;
+    private static final int SCORE_ROW_HEIGHT = 50;
+    private static final int STATS_TITLE_X = 200;
+    private static final int STATS_TITLE_Y = 100;
+    private static final int STATS_FIRST_ROW_Y = 175;
+    private static final int STATS_ROW_HEIGHT = 75;
+    private static final int STATS_SCORE_X = 500;
+
+    public void drawGame(Graphics g, Image gameFieldImage, List<Player> players, GameState state) {
         g.drawImage(gameFieldImage, 0, 0, null);
-        handleRoundTransition.run();
-        if (state == GameState.GAME_OVER) {
-            drawFinalStatistics(g, players);
-        } else if (state == GameState.STARTED) {
-            drawStartScreen(g, players);
-        } else if (state == GameState.RUNNING || state == GameState.PAUSED) {
-            drawScores(g, players);
+        switch (state) {
+            case GAME_OVER -> drawFinalStatistics(g, players);
+            case STARTED -> drawStartScreen(g, players);
+            case RUNNING, PAUSED -> drawScores(g, players);
+            case READY_FOR_NEXT_ROUND -> { /* brief intermediate state — no overlay needed */ }
         }
     }
 
-    public void drawGameField(Graphics g) {
+    void drawGameField(Graphics g) {
         g.setColor(Color.black);
         g.fillRect(0, 0, GameEngine.PLAY_AREA_WIDTH, GameEngine.PLAY_AREA_HEIGHT);
     }
@@ -34,16 +43,11 @@ public class GameRenderer {
     public void drawPlayerCurve(Graphics g, Curve curve, Color color) {
         g.setColor(color);
         g.drawLine(
-                curve.getPreviousXPosition(),
-                curve.getPreviousYPosition(),
-                curve.getXPosition(),
-                curve.getYPosition()
+            curve.getPreviousXPosition(),
+            curve.getPreviousYPosition(),
+            curve.getXPosition(),
+            curve.getYPosition()
         );
-    }
-
-    public void drawScorePanel(Graphics g, List<Player> players, Runnable checkForGameEnd) {
-        drawScores(g, players);
-        checkForGameEnd.run();
     }
 
     public void clearGameField(Image gameFieldImage) {
@@ -60,14 +64,14 @@ public class GameRenderer {
 
     void drawScores(Graphics g, List<Player> players) {
         g.setColor(Color.gray);
-        g.fillRect(682, 0, 118, GameEngine.WINDOW_HEIGHT);
+        g.fillRect(SCORE_PANEL_X, 0, GameEngine.WINDOW_WIDTH - SCORE_PANEL_X, GameEngine.WINDOW_HEIGHT);
 
         for (int i = 0; i < players.size(); i++) {
             Player player = players.get(i);
             g.setColor(player.getColor());
-            g.setFont(new Font("SANS_SERIF", Font.BOLD, 16));
-            g.drawString(player.getPlayerName(), 690, 30 + (i * 50));
-            g.drawString(player.getScore() + " pts", 690, 50 + (i * 50));
+            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
+            g.drawString(player.getPlayerName(), SCORE_TEXT_X, SCORE_FIRST_NAME_Y + (i * SCORE_ROW_HEIGHT));
+            g.drawString(player.getScore() + " pts", SCORE_TEXT_X, SCORE_FIRST_PTS_Y + (i * SCORE_ROW_HEIGHT));
         }
     }
 
@@ -75,15 +79,15 @@ public class GameRenderer {
         g.setColor(Color.black);
         g.fillRect(0, 0, GameEngine.WINDOW_WIDTH, GameEngine.WINDOW_HEIGHT);
         g.setColor(Color.white);
-        g.setFont(new Font("SANS_SERIF", Font.BOLD, 72));
-        g.drawString("Final Scores", 200, 100);
+        g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 72));
+        g.drawString("Final Scores", STATS_TITLE_X, STATS_TITLE_Y);
 
         for (int i = 0; i < players.size(); i++) {
             Player player = players.get(i);
             g.setColor(player.getColor());
-            g.setFont(new Font("SANS_SERIF", Font.BOLD, 36));
-            g.drawString(player.getPlayerName(), 200, 175 + (i * 75));
-            g.drawString(player.getScore() + " pts", 500, 175 + (i * 75));
+            g.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 36));
+            g.drawString(player.getPlayerName(), STATS_TITLE_X, STATS_FIRST_ROW_Y + (i * STATS_ROW_HEIGHT));
+            g.drawString(player.getScore() + " pts", STATS_SCORE_X, STATS_FIRST_ROW_Y + (i * STATS_ROW_HEIGHT));
         }
     }
 }

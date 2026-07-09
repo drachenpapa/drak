@@ -23,6 +23,8 @@ jpackage --name "$APP_NAME" \
          --main-class "$MAIN_CLASS" \
          --type "app-image" \
          --dest "$DIST_DIR"
-#         --icon "$ICON_PATH" \
+#        --icon "$ICON_PATH" \
+# Note: jpackage requires platform-specific icon formats (.icns on macOS, .ico on Windows, .png on Linux).
+# The .png icon above only works on Linux. Uncomment and convert the icon for the target platform.
 
 echo "Build and packaging done: $APP_NAME"

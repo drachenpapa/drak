@@ -2,7 +2,7 @@ package de.drachenpapa.drak.settings;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
+import java.io.Serial;
 
 /**
  * Panel for configuring general game options.
@@ -10,9 +10,14 @@ import java.awt.event.ActionListener;
  */
 class OptionsControlPanel extends JPanel {
 
-    private final JSpinner speedSpinner;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    OptionsControlPanel(int initialSpeed, int minSpeed, int maxSpeed, ActionListener actionListener) {
+    private final JSpinner speedSpinner;
+    private final int defaultSpeed;
+
+    OptionsControlPanel(int initialSpeed, int minSpeed, int maxSpeed, Runnable onStart, Runnable onLoadDefaults) {
+        this.defaultSpeed = initialSpeed;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(new Color(205, 205, 205));
         setBorder(BorderFactory.createEmptyBorder(0, 6, 6, 9));
@@ -30,7 +35,7 @@ class OptionsControlPanel extends JPanel {
         JButton loadDefaultsButton = new JButton("Load Defaults");
         loadDefaultsButton.setFocusPainted(false);
         loadDefaultsButton.setBackground(new Color(180, 180, 180));
-        loadDefaultsButton.addActionListener(actionListener);
+        loadDefaultsButton.addActionListener(e -> onLoadDefaults.run());
 
         JButton startButton = new JButton("Start Game");
         startButton.setPreferredSize(new Dimension(140, 35));
@@ -39,7 +44,7 @@ class OptionsControlPanel extends JPanel {
         startButton.setBackground(new Color(80, 150, 240));
         startButton.setForeground(Color.WHITE);
         startButton.setFont(startButton.getFont().deriveFont(Font.BOLD));
-        startButton.addActionListener(actionListener);
+        startButton.addActionListener(e -> onStart.run());
 
         JPanel topRow = new JPanel();
         topRow.setLayout(new BoxLayout(topRow, BoxLayout.X_AXIS));
@@ -64,6 +69,6 @@ class OptionsControlPanel extends JPanel {
     }
 
     void setSpeedToDefault() {
-        speedSpinner.setValue(3);
+        speedSpinner.setValue(defaultSpeed);
     }
 }

@@ -13,11 +13,11 @@ collisions with their own and other players' curves.
 This repository is a Java remake of the game, originally created during a school internship in 2007. The original source
 code can be found in the [original-src](original-src) directory.
 
-For years I wanted to modernize the game, started it multiple times, but never finished it. Now I finally found the
+For years, I wanted to modernize the game, started it multiple times, but never finished it. Now I finally found the
 time (or rather: took the time) to do so.
 It was a fun little project to see how my skills have developed and how I would approach the project differently today.
 Also, the heavy refactoring and modernization were a great exercise.
-In the later stages, I worked with GitHub Copilot to review the code and making me aware of potential bugs, violations
+In the later stages, I worked with GitHub Copilot to review the code and make me aware of potential bugs, violations
 of principles or how to further improve the code.  
 Now that I finally modernized the game, I'm done with it and will not add any new features or change the game
 mechanics (at least as of June 2025).

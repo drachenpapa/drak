@@ -15,38 +15,27 @@ public class PlayerManager {
     @Getter
     private final List<Player> players;
     @Getter
-    private final List<Point[]> curvePoints = new ArrayList<>();
+    private final List<Point> curvePoints = new ArrayList<>();
 
     PlayerManager(List<Player> players) {
         this.players = players;
     }
 
     int getAlivePlayerCount() {
-        int aliveCount = 0;
-        for (Player player : players) {
-            if (player.isAlive()) {
-                aliveCount++;
-            }
-        }
-        return aliveCount;
+        return (int) players.stream().filter(Player::isAlive).count();
     }
 
     void resetForNextRound() {
         curvePoints.clear();
         for (Player player : players) {
-            player.setCurve(new Curve(
-                    (int) (Math.random() * GameEngine.WINDOW_WIDTH) + 100,
-                    (int) (Math.random() * GameEngine.WINDOW_HEIGHT) + 100,
-                    Math.random() * 360,
-                    (int) (Math.random() * 10) + 1)
-            );
+            player.resetCurve();
             player.setAlive(true);
         }
     }
 
     void increasePointsForAlivePlayers() {
         players.stream()
-                .filter(Player::isAlive)
-                .forEach(Player::increaseScore);
+            .filter(Player::isAlive)
+            .forEach(Player::increaseScore);
     }
 }

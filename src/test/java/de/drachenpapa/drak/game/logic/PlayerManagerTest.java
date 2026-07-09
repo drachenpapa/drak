@@ -19,8 +19,8 @@ class PlayerManagerTest {
     @BeforeEach
     void setUp() {
         players = List.of(
-                new Player("Player 1", Color.RED, '1', 'q'),
-                new Player("Player 2", Color.GREEN, 'y', 'x'));
+            new Player("Player 1", Color.RED, '1', 'q'),
+            new Player("Player 2", Color.GREEN, 'y', 'x'));
         playerManager = new PlayerManager(players);
     }
 
@@ -45,17 +45,19 @@ class PlayerManagerTest {
     class ResetForNextRound {
 
         @Test
-        @DisplayName("sets all players alive and resets their curves")
+        @DisplayName("sets all players alive, resets their curves, and clears the curve points")
         void setsAllPlayersAliveAndResetsCurves() {
             players.get(0).setAlive(false);
             players.get(1).setAlive(false);
             players.get(0).setCurve(new Curve(1, 1, 0, 1));
             players.get(1).setCurve(new Curve(2, 2, 0, 1));
+            playerManager.getCurvePoints().add(new Point(5, 5));
 
             playerManager.resetForNextRound();
 
             assertThat(players).extracting(Player::isAlive).containsOnly(true);
             assertThat(players).extracting(Player::getCurve).doesNotContainNull();
+            assertThat(playerManager.getCurvePoints()).isEmpty();
         }
     }
 

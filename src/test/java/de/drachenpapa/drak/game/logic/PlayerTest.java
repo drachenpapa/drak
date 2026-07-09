@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.awt.Color;
+import java.awt.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +40,12 @@ class PlayerTest {
         void hasNonNullCurve() {
             assertThat(player.getCurve()).isNotNull();
         }
+
+        @Test
+        @DisplayName("is alive")
+        void isAlive() {
+            assertThat(player.isAlive()).isTrue();
+        }
     }
 
     @Nested
@@ -52,6 +58,19 @@ class PlayerTest {
             Curve newCurve = new Curve(200, 300, 90, 5);
             player.setCurve(newCurve);
             assertThat(player.getCurve()).isEqualTo(newCurve);
+        }
+    }
+
+    @Nested
+    @DisplayName("resetCurve()")
+    class ResetCurve {
+
+        @Test
+        @DisplayName("replaces the curve with a new instance")
+        void replacesWithNewInstance() {
+            Curve originalCurve = player.getCurve();
+            player.resetCurve();
+            assertThat(player.getCurve()).isNotSameAs(originalCurve);
         }
     }
 

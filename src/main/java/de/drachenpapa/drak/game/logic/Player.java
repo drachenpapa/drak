@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.awt.*;
+import java.util.Random;
 
 /**
  * Represents a player in the game.
@@ -11,6 +12,8 @@ import java.awt.*;
  * Manages the player's curve and input status during gameplay.
  */
 public class Player {
+
+    private final Random random = new Random();
 
     @Getter
     private final String playerName;
@@ -20,7 +23,6 @@ public class Player {
     private final char leftKey;
     @Getter
     private final char rightKey;
-
     @Getter
     @Setter
     private Curve curve;
@@ -49,11 +51,16 @@ public class Player {
         this.score++;
     }
 
+    void resetCurve() {
+        this.curve = createNewCurve();
+    }
+
     private Curve createNewCurve() {
-        int xPosition = (int) (Math.random() * GameEngine.WINDOW_WIDTH + 100);
-        int yPosition = (int) (Math.random() * GameEngine.WINDOW_HEIGHT + 100);
-        double direction = Math.random() * 360;
-        int size = (int) (Math.random() * 10) + 1;
-        return new Curve(xPosition, yPosition, direction, size);
+        int xPosition = 100 + random.nextInt(GameEngine.PLAY_AREA_WIDTH - 200);
+        int yPosition = 100 + random.nextInt(GameEngine.PLAY_AREA_HEIGHT - 200);
+        double direction = random.nextDouble() * 360;
+        int gapInterval = random.nextInt(10) + 1;
+
+        return new Curve(xPosition, yPosition, direction, gapInterval);
     }
 }

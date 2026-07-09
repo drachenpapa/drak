@@ -34,6 +34,22 @@ class CurveTest {
             curve.turnRight();
             assertThat(curve.getDirectionAngle()).isEqualTo(80.0);
         }
+
+        @Test
+        @DisplayName("wraps to 0° when turning left from 350°")
+        void wrapsToZeroWhenTurningLeftFrom350() {
+            Curve c = new Curve(0, 0, 350, 2000);
+            c.turnLeft();
+            assertThat(c.getDirectionAngle()).isEqualTo(0.0);
+        }
+
+        @Test
+        @DisplayName("wraps to 350° when turning right from 0°")
+        void wrapsTo350WhenTurningRightFrom0() {
+            Curve c = new Curve(0, 0, 0, 2000);
+            c.turnRight();
+            assertThat(c.getDirectionAngle()).isEqualTo(350.0);
+        }
     }
 
     @Nested
@@ -48,8 +64,9 @@ class CurveTest {
 
             curve.move();
 
-            assertThat(new int[]{curve.getXPosition(), curve.getYPosition()})
-                    .isNotEqualTo(new int[]{initialX, initialY});
+            // at 90°: cos(90°)=0, sin(90°)=1, stepSize=6 → x unchanged, y -= 6
+            assertThat(curve.getXPosition()).isEqualTo(0);
+            assertThat(curve.getYPosition()).isEqualTo(-6);
             assertThat(curve.getPoints()).hasSize(2);
             assertThat(curve.getPreviousXPosition()).isEqualTo(initialX);
             assertThat(curve.getPreviousYPosition()).isEqualTo(initialY);
@@ -80,22 +97,28 @@ class CurveTest {
     class GapGeneration {
 
         @Test
+        @DisplayName("is not active before interval elapses")
+        void isNotActiveBeforeIntervalElapses() {
+            assertThat(curve.isGeneratingGap()).isFalse();
+        }
+
+        @Test
         @DisplayName("activates after interval elapsed and deactivates afterwards")
         void activatesAndDeactivates() throws InterruptedException {
             Curve gapCurve = new Curve(0, 0, 90, 10);
             Thread.sleep(20);
 
             assertThat(gapCurve.isGeneratingGap())
-                    .as("Gap should be active after interval elapsed")
-                    .isTrue();
+                .as("Gap should be active after interval elapsed")
+                .isTrue();
 
             int count = 0;
             while (gapCurve.isGeneratingGap() && count < 10) {
                 count++;
             }
             assertThat(gapCurve.isGeneratingGap())
-                    .as("Gap should end after some time")
-                    .isFalse();
+                .as("Gap should end after some time")
+                .isFalse();
         }
     }
 }

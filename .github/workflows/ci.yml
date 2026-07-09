@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build project
+  ci:
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,24 +22,8 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-      - name: Build project
-        run: mvn -B package -DskipTests
-
-  test:
-    name: Run unit tests
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-      - name: Set up JDK
-        uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-      - name: Run unit tests
-        run: mvn -B test -U
+      - name: Build and run tests
+        run: mvn -B verify
       - name: Gather test results
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3
         if: always()

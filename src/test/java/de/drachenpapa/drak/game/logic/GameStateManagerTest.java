@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,8 +27,8 @@ class GameStateManagerTest {
     @BeforeEach
     void setUp() {
         players = List.of(
-                new Player("Player 1", Color.RED, '1', 'q'),
-                new Player("Player 2", Color.GREEN, 'y', 'x'));
+            new Player("Player 1", Color.RED, '1', 'q'),
+            new Player("Player 2", Color.GREEN, 'y', 'x'));
         gameStateManager = new GameStateManager(playerManager, 3);
     }
 
@@ -52,8 +52,7 @@ class GameStateManagerTest {
         @Test
         @DisplayName("transitions to READY_FOR_NEXT_ROUND when only one player is alive")
         void transitionsToReadyForNextRoundWithOneAlivePlayer() {
-            players.get(0).setAlive(true);
-            players.get(1).setAlive(false);
+            when(playerManager.getAlivePlayerCount()).thenReturn(1);
 
             gameStateManager.checkForGameEnd();
 
@@ -81,13 +80,25 @@ class GameStateManagerTest {
     class HandleRoundTransition {
 
         @Test
-        @DisplayName("sets state to PAUSED")
+        @DisplayName("sets state to PAUSED when state is READY_FOR_NEXT_ROUND")
         void setsStateToPaused() {
             gameStateManager.setGameState(GameState.READY_FOR_NEXT_ROUND);
 
-            gameStateManager.handleRoundTransition(() -> {});
+            gameStateManager.handleRoundTransition(() -> {
+            });
 
             assertThat(gameStateManager.getGameState()).isEqualTo(GameState.PAUSED);
+        }
+
+        @Test
+        @DisplayName("does nothing when state is not READY_FOR_NEXT_ROUND")
+        void doesNothingWhenNotReadyForNextRound() {
+            gameStateManager.setGameState(GameState.RUNNING);
+
+            gameStateManager.handleRoundTransition(() -> {
+            });
+
+            assertThat(gameStateManager.getGameState()).isEqualTo(GameState.RUNNING);
         }
     }
 }

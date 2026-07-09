@@ -1,17 +1,18 @@
 package de.drachenpapa.drak.game.logic;
 
+import de.drachenpapa.drak.game.view.DefaultGameWindowFactory;
 import de.drachenpapa.drak.game.view.GamePanel;
 import de.drachenpapa.drak.game.view.GameRenderer;
 import de.drachenpapa.drak.game.view.GameWindow;
 import de.drachenpapa.drak.game.view.GameWindowFactory;
-import de.drachenpapa.drak.game.view.DefaultGameWindowFactory;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
- * Game engine which handles game logic and lifecycle management.
+ * Game engine that handles game logic and lifecycle management.
  * Connects all core components, manages the game loop and state transitions.
  * Coordinates player actions, collision handling, and rendering.
  */
@@ -21,6 +22,13 @@ public class GameEngine {
     public static final int WINDOW_HEIGHT = 600;
     public static final int PLAY_AREA_WIDTH = 680;
     public static final int PLAY_AREA_HEIGHT = WINDOW_HEIGHT;
+    public static final int MIN_SPEED_LEVEL = 1;
+    public static final int MAX_SPEED_LEVEL = 5;
+    public static final int DEFAULT_SPEED_LEVEL = 3;
+
+    private static final int SPEED_INTERVAL_MS = 10;
+
+    static final int WINNING_SCORE_PER_PLAYER = 10;
 
     private final BufferedImage gameFieldImage;
     private final CollisionManager collisionManager;
@@ -29,38 +37,60 @@ public class GameEngine {
     private final GameStateManager gameStateManager;
     private final GameWindow gameWindow;
     private final PlayerManager playerManager;
+    private final Runnable onGameEnd;
     private final int gameSpeed;
 
+    private Timer gameLoopTimer;
+
     public GameEngine(List<Player> players, int speed) {
-        this(players, speed, new DefaultGameWindowFactory());
+        this(players, speed, new DefaultGameWindowFactory(), () -> { });
     }
 
-    GameEngine(List<Player> players, int speed, GameWindowFactory windowFactory) {
+    public GameEngine(List<Player> players, int speed, Runnable onGameEnd) {
+        this(players, speed, new DefaultGameWindowFactory(), onGameEnd);
+    }
+
+    private GameEngine(List<Player> players, int speed, GameWindowFactory windowFactory, Runnable onGameEnd) {
+        this.onGameEnd = onGameEnd;
         this.playerManager = new PlayerManager(players);
         this.collisionManager = new CollisionManager(playerManager.getPlayers(), playerManager.getCurvePoints(), playerManager);
-        this.gameStateManager = new GameStateManager(playerManager, (players.size() - 1) * 10);
+        this.gameStateManager = new GameStateManager(playerManager, (players.size() - 1) * WINNING_SCORE_PER_PLAYER);
         this.gameRenderer = new GameRenderer();
-        this.gameSpeed = 10 * (6 - speed);
+        this.gameSpeed = SPEED_INTERVAL_MS * (MAX_SPEED_LEVEL + 1 - speed);
         this.gameFieldImage = new BufferedImage(PLAY_AREA_WIDTH, PLAY_AREA_HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        this.gamePanel = new GamePanel(gameRenderer, playerManager, gameStateManager, this, gameFieldImage);
+        this.gamePanel = new GamePanel(gameRenderer, playerManager, gameStateManager, gameFieldImage);
+        this.gameWindow = windowFactory.create(gamePanel, this);
+    }
+
+    /**
+     * Test-only constructor allowing mock injection of {@code gameStateManager} and {@code gamePanel}.
+     */
+    GameEngine(List<Player> players, int speed, GameWindowFactory windowFactory, GameStateManager gameStateManager, GamePanel gamePanel, Runnable onGameEnd) {
+        this.onGameEnd = onGameEnd;
+        this.playerManager = new PlayerManager(players);
+        this.collisionManager = new CollisionManager(playerManager.getPlayers(), playerManager.getCurvePoints(), playerManager);
+        this.gameStateManager = gameStateManager;
+        this.gameRenderer = new GameRenderer();
+        this.gameSpeed = SPEED_INTERVAL_MS * (MAX_SPEED_LEVEL + 1 - speed);
+        this.gameFieldImage = new BufferedImage(PLAY_AREA_WIDTH, PLAY_AREA_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        this.gamePanel = gamePanel;
         this.gameWindow = windowFactory.create(gamePanel, this);
     }
 
     public void startGame() {
         gameStateManager.setGameState(GameState.RUNNING);
-        javax.swing.Timer timer = new javax.swing.Timer(gameSpeed, e -> {
-            GameState state = gameStateManager.getGameState();
-            if (state == GameState.RUNNING || state == GameState.GAME_OVER) {
+        gameLoopTimer = new Timer(gameSpeed, e -> {
+            if (gameStateManager.getGameState() == GameState.RUNNING) {
                 updateGameState();
-                gamePanel.repaint();
             }
+            handleRoundTransition();
+            gamePanel.repaint();
         });
-        timer.start();
+        gameLoopTimer.start();
     }
 
-    public void handleRoundTransition() {
+    void handleRoundTransition() {
         gameStateManager.handleRoundTransition(this::resetGameForNextRound);
-        gamePanel.repaint();
     }
 
     List<Player> getPlayers() {
@@ -68,14 +98,15 @@ public class GameEngine {
     }
 
     void quitGame() {
+        if (gameLoopTimer != null) {
+            gameLoopTimer.stop();
+        }
         gameStateManager.setGameState(GameState.GAME_OVER);
         gameWindow.close();
+        onGameEnd.run();
     }
 
     private void updateGameState() {
-        if (gameStateManager.getGameState() == GameState.GAME_OVER) {
-            return;
-        }
         updateCurvesAndDraw();
         updatePlayerMovements();
     }
@@ -90,7 +121,7 @@ public class GameEngine {
 
             if (player.isAlive() && !curve.isGeneratingGap()) {
                 if (collisionManager.isCollisionDetected(curve)) {
-                    handleCollision(g2, i);
+                    handleCollision(i);
                 } else {
                     gameRenderer.drawPlayerCurve(g2, curve, player.getColor());
                 }
@@ -118,12 +149,8 @@ public class GameEngine {
         gameRenderer.clearGameField(gameFieldImage);
     }
 
-    private void checkForGameEnd() {
-        gameStateManager.checkForGameEnd();
-    }
-
-    private void handleCollision(Graphics g, int playerIndex) {
+    private void handleCollision(int playerIndex) {
         collisionManager.handleCollision(playerIndex);
-        gameRenderer.drawScorePanel(g, playerManager.getPlayers(), this::checkForGameEnd);
+        gameStateManager.checkForGameEnd();
     }
 }

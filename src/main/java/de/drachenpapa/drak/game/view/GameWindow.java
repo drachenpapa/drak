@@ -1,5 +1,6 @@
 package de.drachenpapa.drak.game.view;
 
+import de.drachenpapa.drak.Drak;
 import de.drachenpapa.drak.game.logic.GameEngine;
 import de.drachenpapa.drak.game.logic.InputHandler;
 
@@ -19,11 +20,8 @@ public class GameWindow {
 
     GameWindow(GamePanel gamePanel, GameEngine gameEngine) {
         frame = new JFrame(GAME_TITLE);
-        try {
-            Image logo = Toolkit.getDefaultToolkit().getImage(getClass().getResource("/logo.png"));
-            frame.setIconImage(logo);
-        } catch (Exception ignored) { }
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Drak.applyAppIcon(frame);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setContentPane(gamePanel);
         frame.pack();
         frame.setResizable(false);
